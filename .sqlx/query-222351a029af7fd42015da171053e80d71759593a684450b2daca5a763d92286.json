@@ -1,0 +1,92 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT id AS \"id!: Uuid\", workspace_id AS \"workspace_id!: Uuid\",\n                   work_item_id AS \"work_item_id!: Uuid\", name,\n                   trigger_kind, trigger_config,\n                   prompt_template_id AS \"prompt_template_id?: Uuid\",\n                   model_preset_id AS \"model_preset_id?: Uuid\",\n                   prompt_override,\n                   enabled AS \"enabled!: bool\",\n                   last_fired_at AS \"last_fired_at?: chrono::DateTime<chrono::Utc>\",\n                   created_at AS \"created_at!: chrono::DateTime<chrono::Utc>\",\n                   updated_at AS \"updated_at!: chrono::DateTime<chrono::Utc>\"\n                   FROM automation_rules ORDER BY created_at DESC",
+  "describe": {
+    "columns": [
+      {
+        "name": "id!: Uuid",
+        "ordinal": 0,
+        "type_info": "Blob"
+      },
+      {
+        "name": "workspace_id!: Uuid",
+        "ordinal": 1,
+        "type_info": "Blob"
+      },
+      {
+        "name": "work_item_id!: Uuid",
+        "ordinal": 2,
+        "type_info": "Blob"
+      },
+      {
+        "name": "name",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "trigger_kind",
+        "ordinal": 4,
+        "type_info": "Text"
+      },
+      {
+        "name": "trigger_config",
+        "ordinal": 5,
+        "type_info": "Text"
+      },
+      {
+        "name": "prompt_template_id?: Uuid",
+        "ordinal": 6,
+        "type_info": "Blob"
+      },
+      {
+        "name": "model_preset_id?: Uuid",
+        "ordinal": 7,
+        "type_info": "Blob"
+      },
+      {
+        "name": "prompt_override",
+        "ordinal": 8,
+        "type_info": "Text"
+      },
+      {
+        "name": "enabled!: bool",
+        "ordinal": 9,
+        "type_info": "Integer"
+      },
+      {
+        "name": "last_fired_at?: chrono::DateTime<chrono::Utc>",
+        "ordinal": 10,
+        "type_info": "Text"
+      },
+      {
+        "name": "created_at!: chrono::DateTime<chrono::Utc>",
+        "ordinal": 11,
+        "type_info": "Text"
+      },
+      {
+        "name": "updated_at!: chrono::DateTime<chrono::Utc>",
+        "ordinal": 12,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      true,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+      true,
+      false,
+      true,
+      false,
+      false
+    ]
+  },
+  "hash": "222351a029af7fd42015da171053e80d71759593a684450b2daca5a763d92286"
+}

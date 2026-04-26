@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT body_text FROM prompt_templates WHERE id = ?1",
+  "describe": {
+    "columns": [
+      {
+        "name": "body_text",
+        "ordinal": 0,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "6b6c9bbf2790dfce4fca7e65cc9d663a5ab55d9216544d670716377b7213d15c"
+}

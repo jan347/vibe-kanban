@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "\n        SELECT\n            id               AS \"id!: Uuid\",\n            message_id       AS \"message_id!: Uuid\",\n            inline_blob_path,\n            mime_type,\n            size_bytes,\n            filename,\n            created_at       AS \"created_at!: DateTime<Utc>\"\n        FROM mail_attachments\n        WHERE id = ?1\n        ",
+  "query": "\n        SELECT\n            id               AS \"id!: Uuid\",\n            message_id       AS \"message_id!: Uuid\",\n            inline_blob_path,\n            artifact_id      AS \"artifact_id?: Uuid\",\n            mime_type,\n            size_bytes,\n            filename,\n            created_at       AS \"created_at!: DateTime<Utc>\"\n        FROM mail_attachments\n        WHERE id = ?1\n        ",
   "describe": {
     "columns": [
       {
@@ -19,23 +19,28 @@
         "type_info": "Text"
       },
       {
-        "name": "mime_type",
+        "name": "artifact_id?: Uuid",
         "ordinal": 3,
+        "type_info": "Blob"
+      },
+      {
+        "name": "mime_type",
+        "ordinal": 4,
         "type_info": "Text"
       },
       {
         "name": "size_bytes",
-        "ordinal": 4,
+        "ordinal": 5,
         "type_info": "Integer"
       },
       {
         "name": "filename",
-        "ordinal": 5,
+        "ordinal": 6,
         "type_info": "Text"
       },
       {
         "name": "created_at!: DateTime<Utc>",
-        "ordinal": 6,
+        "ordinal": 7,
         "type_info": "Text"
       }
     ],
@@ -49,8 +54,9 @@
       true,
       true,
       true,
+      true,
       false
     ]
   },
-  "hash": "929ed0319ffbb248685b2be0f78e12c968ef37ee199cdea0db06cef50aed1a74"
+  "hash": "6a266e71b98e66f397ae5b1d9e2bbce9efb953252dc37bee6c3bacb5ce593df4"
 }

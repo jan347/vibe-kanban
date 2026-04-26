@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO automation_rules\n           (id, workspace_id, work_item_id, name, trigger_kind, trigger_config,\n            prompt_template_id, model_preset_id, prompt_override)\n           VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 9
+    },
+    "nullable": []
+  },
+  "hash": "c24872c638996e5a33f81ee7d1e8cc07c376c43e1104f229a27fc20cd69d4bcc"
+}

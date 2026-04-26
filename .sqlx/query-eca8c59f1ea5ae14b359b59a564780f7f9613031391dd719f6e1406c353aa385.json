@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE automation_rules SET\n           name = COALESCE(?1, name),\n           trigger_kind = COALESCE(?2, trigger_kind),\n           trigger_config = COALESCE(?3, trigger_config),\n           prompt_template_id = COALESCE(?4, prompt_template_id),\n           model_preset_id = COALESCE(?5, model_preset_id),\n           prompt_override = COALESCE(?6, prompt_override),\n           enabled = COALESCE(?7, enabled),\n           updated_at = ?8\n           WHERE id = ?9",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 9
+    },
+    "nullable": []
+  },
+  "hash": "eca8c59f1ea5ae14b359b59a564780f7f9613031391dd719f6e1406c353aa385"
+}

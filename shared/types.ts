@@ -264,6 +264,14 @@ export type UpdateSafetyConfig = { require_human_approval: boolean | null, max_c
 
 export type SafetyCheckResult = { allowed: boolean, reason: string | null, active_dispatches: bigint, daily_dispatches: bigint, require_human_approval: boolean, };
 
+export type AutomationRule = { id: string, workspace_id: string, work_item_id: string, name: string, trigger_kind: string, trigger_config: string, prompt_template_id: string | null, model_preset_id: string | null, prompt_override: string | null, enabled: boolean, last_fired_at: string | null, created_at: string, updated_at: string, };
+
+export type CreateAutomationRule = { workspace_id: string, work_item_id: string, name: string, trigger_kind: string, trigger_config: string | null, prompt_template_id: string | null, model_preset_id: string | null, prompt_override: string | null, };
+
+export type UpdateAutomationRule = { name: string | null, trigger_kind: string | null, trigger_config: string | null, prompt_template_id: string | null, model_preset_id: string | null, prompt_override: string | null, enabled: boolean | null, };
+
+export type FireAutomationResult = { rule_id: string, dispatch_id: string, fired_at: string, };
+
 export type Merge = { "type": "direct" } & DirectMerge | { "type": "pr" } & PrMerge;
 
 export type DirectMerge = { id: string, workspace_id: string, repo_id: string, merge_commit: string, target_branch_name: string, created_at: string, };

@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE automation_rules SET last_fired_at = ?1, updated_at = ?1 WHERE id = ?2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "f13d0eb2dddbabe8a2843077fc3926dc61b27884482f020542e2d6bc3332cfad"
+}

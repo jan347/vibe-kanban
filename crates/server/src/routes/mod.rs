@@ -8,6 +8,7 @@ use crate::{DeploymentImpl, middleware};
 
 pub mod approvals;
 pub mod artifacts;
+pub mod automation;
 pub mod config;
 pub mod containers;
 pub mod dispatch;
@@ -63,6 +64,7 @@ pub fn router(deployment: DeploymentImpl) -> IntoMakeService<Router> {
         .merge(artifacts::router())
         .merge(dispatch::router())
         .merge(safety::router())
+        .merge(automation::router())
         .merge(scratch::router(&deployment))
         .merge(search::router(&deployment))
         .merge(preview::api_router())

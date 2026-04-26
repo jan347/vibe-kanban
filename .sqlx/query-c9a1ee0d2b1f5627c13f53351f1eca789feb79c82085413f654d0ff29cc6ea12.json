@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO dispatch_log\n           (id, work_item_id, workspace_id, prompt_text, prompt_template_id, model_preset_id, status)\n           VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 7
+    },
+    "nullable": []
+  },
+  "hash": "c9a1ee0d2b1f5627c13f53351f1eca789feb79c82085413f654d0ff29cc6ea12"
+}

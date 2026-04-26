@@ -1,4 +1,5 @@
 pub mod artifact;
+pub mod automation;
 pub mod coding_agent_turn;
 pub mod dispatch;
 pub mod execution_process;
