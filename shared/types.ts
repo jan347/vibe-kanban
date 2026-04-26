@@ -258,6 +258,12 @@ export type DispatchStatus = "pending" | "running" | "completed" | "failed" | "c
 
 export type CreateDispatch = { work_item_id: string, workspace_id: string, prompt_text: string, prompt_template_id: string | null, model_preset_id: string | null, };
 
+export type SafetyConfig = { id: string, workspace_id: string | null, scope: string, require_human_approval: boolean, max_concurrent_dispatch: bigint, max_daily_dispatch: bigint, cooldown_seconds: bigint, created_at: string, updated_at: string, };
+
+export type UpdateSafetyConfig = { require_human_approval: boolean | null, max_concurrent_dispatch: bigint | null, max_daily_dispatch: bigint | null, cooldown_seconds: bigint | null, };
+
+export type SafetyCheckResult = { allowed: boolean, reason: string | null, active_dispatches: bigint, daily_dispatches: bigint, require_human_approval: boolean, };
+
 export type Merge = { "type": "direct" } & DirectMerge | { "type": "pr" } & PrMerge;
 
 export type DirectMerge = { id: string, workspace_id: string, repo_id: string, merge_commit: string, target_branch_name: string, created_at: string, };

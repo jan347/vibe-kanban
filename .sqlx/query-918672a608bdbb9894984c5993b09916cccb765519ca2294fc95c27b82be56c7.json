@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT COUNT(*) FROM dispatch_log WHERE workspace_id = ?1 AND started_at > datetime('now', '-1 day')",
+  "describe": {
+    "columns": [
+      {
+        "name": "COUNT(*)",
+        "ordinal": 0,
+        "type_info": "Integer"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "918672a608bdbb9894984c5993b09916cccb765519ca2294fc95c27b82be56c7"
+}

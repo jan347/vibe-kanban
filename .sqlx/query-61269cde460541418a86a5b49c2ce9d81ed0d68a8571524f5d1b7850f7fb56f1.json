@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT COUNT(*) FROM dispatch_log WHERE workspace_id = ?1 AND status IN ('pending','running')",
+  "describe": {
+    "columns": [
+      {
+        "name": "COUNT(*)",
+        "ordinal": 0,
+        "type_info": "Integer"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "61269cde460541418a86a5b49c2ce9d81ed0d68a8571524f5d1b7850f7fb56f1"
+}

@@ -14,6 +14,7 @@ pub mod pull_request;
 pub mod repo;
 pub mod repo_bundle;
 pub mod requests;
+pub mod safety;
 pub mod scratch;
 pub mod session;
 pub mod tag;

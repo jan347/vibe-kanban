@@ -30,6 +30,7 @@ pub mod releases;
 pub mod remote;
 pub mod repo;
 pub mod repo_bundles;
+pub mod safety;
 pub mod scratch;
 pub mod search;
 pub mod sessions;
@@ -61,6 +62,7 @@ pub fn router(deployment: DeploymentImpl) -> IntoMakeService<Router> {
         .merge(work_items::router())
         .merge(artifacts::router())
         .merge(dispatch::router())
+        .merge(safety::router())
         .merge(scratch::router(&deployment))
         .merge(search::router(&deployment))
         .merge(preview::api_router())
