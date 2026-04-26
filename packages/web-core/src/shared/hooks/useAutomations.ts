@@ -2,8 +2,10 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type {
   ApiResponse,
   AutomationRule,
+  AutoApprovalLogEntry,
   CreateAutomationRule,
   FireAutomationResult,
+  ResolveAutoApprovalRequest,
   SafetyConfig,
   UpdateAutomationRule,
   UpdateSafetyConfig,
@@ -125,6 +127,41 @@ export function useUpdateSafetyConfig() {
       }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['safety'] });
+    },
+  });
+}
+
+export function useAutoApprovalLog(opts?: {
+  workspaceId?: string;
+  pendingOnly?: boolean;
+}) {
+  const params = new URLSearchParams();
+  if (opts?.workspaceId) params.set('workspace_id', opts.workspaceId);
+  if (opts?.pendingOnly) params.set('pending_only', 'true');
+  const qs = params.toString() ? `?${params}` : '';
+  return useQuery({
+    queryKey: ['safety', 'auto-approval-log', opts ?? {}],
+    queryFn: () =>
+      call<AutoApprovalLogEntry[]>(`/api/safety/auto-approval-log${qs}`),
+  });
+}
+
+export function useResolveAutoApproval() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      id,
+      decision,
+    }: {
+      id: string;
+      decision: ResolveAutoApprovalRequest['decision'];
+    }) =>
+      call<AutoApprovalLogEntry>(
+        `/api/safety/auto-approval-log/${id}/resolve`,
+        { method: 'POST', json: { decision } }
+      ),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['safety', 'auto-approval-log'] });
     },
   });
 }

@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE auto_approval_log\n           SET resolved_decision = ?1, resolved_at = ?2\n           WHERE id = ?3",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": []
+  },
+  "hash": "b262ae1b28234f0bdacaa9ef5ca813506e83ba4876a79ac4c31eaec93f3ab5df"
+}

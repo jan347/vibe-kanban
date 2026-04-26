@@ -1,13 +1,15 @@
 use axum::{
     Router,
-    extract::{Path, State},
+    extract::{Path, Query, State},
     response::Json as ResponseJson,
     routing::{get, post},
 };
 use db::models::safety::{
-    AutoApprovalDecision, AutoApprovalRequest, SafetyCheckResult, SafetyConfig, UpdateSafetyConfig,
+    AutoApprovalDecision, AutoApprovalLogEntry, AutoApprovalRequest, ResolveAutoApprovalRequest,
+    SafetyCheckResult, SafetyConfig, UpdateSafetyConfig,
 };
 use deployment::Deployment;
+use serde::Deserialize;
 use utils::response::ApiResponse;
 use uuid::Uuid;
 
@@ -198,6 +200,123 @@ pub async fn auto_approve(
     Ok(ResponseJson(ApiResponse::success(decision)))
 }
 
+#[derive(Deserialize)]
+pub struct AutoApprovalLogFilter {
+    pub workspace_id: Option<Uuid>,
+    pub pending_only: Option<bool>,
+}
+
+pub async fn list_auto_approval_log(
+    State(deployment): State<DeploymentImpl>,
+    Query(filter): Query<AutoApprovalLogFilter>,
+) -> Result<ResponseJson<ApiResponse<Vec<AutoApprovalLogEntry>>>, ApiError> {
+    let pool = &deployment.db().pool;
+    let pending_only = filter.pending_only.unwrap_or(false);
+    let rows = match (filter.workspace_id, pending_only) {
+        (Some(ws), true) => {
+            sqlx::query_as!(
+                AutoApprovalLogEntry,
+                r#"SELECT id AS "id!: Uuid", workspace_id AS "workspace_id!: Uuid",
+                   action_kind, action_summary, decision, reasoning, decided_by,
+                   decided_at AS "decided_at!: chrono::DateTime<chrono::Utc>",
+                   resolved_decision,
+                   resolved_at AS "resolved_at?: chrono::DateTime<chrono::Utc>"
+                   FROM auto_approval_log
+                   WHERE workspace_id = ?1 AND decision = 'escalated' AND resolved_decision IS NULL
+                   ORDER BY decided_at DESC LIMIT 200"#,
+                ws
+            )
+            .fetch_all(pool)
+            .await?
+        }
+        (Some(ws), false) => {
+            sqlx::query_as!(
+                AutoApprovalLogEntry,
+                r#"SELECT id AS "id!: Uuid", workspace_id AS "workspace_id!: Uuid",
+                   action_kind, action_summary, decision, reasoning, decided_by,
+                   decided_at AS "decided_at!: chrono::DateTime<chrono::Utc>",
+                   resolved_decision,
+                   resolved_at AS "resolved_at?: chrono::DateTime<chrono::Utc>"
+                   FROM auto_approval_log WHERE workspace_id = ?1
+                   ORDER BY decided_at DESC LIMIT 200"#,
+                ws
+            )
+            .fetch_all(pool)
+            .await?
+        }
+        (None, true) => {
+            sqlx::query_as!(
+                AutoApprovalLogEntry,
+                r#"SELECT id AS "id!: Uuid", workspace_id AS "workspace_id!: Uuid",
+                   action_kind, action_summary, decision, reasoning, decided_by,
+                   decided_at AS "decided_at!: chrono::DateTime<chrono::Utc>",
+                   resolved_decision,
+                   resolved_at AS "resolved_at?: chrono::DateTime<chrono::Utc>"
+                   FROM auto_approval_log
+                   WHERE decision = 'escalated' AND resolved_decision IS NULL
+                   ORDER BY decided_at DESC LIMIT 200"#
+            )
+            .fetch_all(pool)
+            .await?
+        }
+        (None, false) => {
+            sqlx::query_as!(
+                AutoApprovalLogEntry,
+                r#"SELECT id AS "id!: Uuid", workspace_id AS "workspace_id!: Uuid",
+                   action_kind, action_summary, decision, reasoning, decided_by,
+                   decided_at AS "decided_at!: chrono::DateTime<chrono::Utc>",
+                   resolved_decision,
+                   resolved_at AS "resolved_at?: chrono::DateTime<chrono::Utc>"
+                   FROM auto_approval_log
+                   ORDER BY decided_at DESC LIMIT 200"#
+            )
+            .fetch_all(pool)
+            .await?
+        }
+    };
+    Ok(ResponseJson(ApiResponse::success(rows)))
+}
+
+pub async fn resolve_auto_approval(
+    State(deployment): State<DeploymentImpl>,
+    Path(id): Path<Uuid>,
+    ResponseJson(payload): ResponseJson<ResolveAutoApprovalRequest>,
+) -> Result<ResponseJson<ApiResponse<AutoApprovalLogEntry>>, ApiError> {
+    if payload.decision != "approved" && payload.decision != "denied" {
+        return Err(ApiError::BadRequest(
+            "decision must be 'approved' or 'denied'".into(),
+        ));
+    }
+    let pool = &deployment.db().pool;
+    let now_str = chrono::Utc::now()
+        .format("%Y-%m-%dT%H:%M:%S%.3fZ")
+        .to_string();
+    sqlx::query!(
+        r#"UPDATE auto_approval_log
+           SET resolved_decision = ?1, resolved_at = ?2
+           WHERE id = ?3"#,
+        payload.decision,
+        now_str,
+        id,
+    )
+    .execute(pool)
+    .await?;
+
+    let row = sqlx::query_as!(
+        AutoApprovalLogEntry,
+        r#"SELECT id AS "id!: Uuid", workspace_id AS "workspace_id!: Uuid",
+           action_kind, action_summary, decision, reasoning, decided_by,
+           decided_at AS "decided_at!: chrono::DateTime<chrono::Utc>",
+           resolved_decision,
+           resolved_at AS "resolved_at?: chrono::DateTime<chrono::Utc>"
+           FROM auto_approval_log WHERE id = ?1"#,
+        id
+    )
+    .fetch_one(pool)
+    .await?;
+    Ok(ResponseJson(ApiResponse::success(row)))
+}
+
 pub fn router() -> Router<DeploymentImpl> {
     Router::new()
         .route(
@@ -206,4 +325,9 @@ pub fn router() -> Router<DeploymentImpl> {
         )
         .route("/safety/check/{workspace_id}", get(check_dispatch_safety))
         .route("/safety/auto-approve", post(auto_approve))
+        .route("/safety/auto-approval-log", get(list_auto_approval_log))
+        .route(
+            "/safety/auto-approval-log/{id}/resolve",
+            post(resolve_auto_approval),
+        )
 }

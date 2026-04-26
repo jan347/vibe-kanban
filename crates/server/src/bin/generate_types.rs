@@ -95,6 +95,7 @@ fn generate_types_content() -> String {
         db::models::safety::AutoApprovalLogEntry::decl(),
         db::models::safety::AutoApprovalRequest::decl(),
         db::models::safety::AutoApprovalDecision::decl(),
+        db::models::safety::ResolveAutoApprovalRequest::decl(),
         db::models::automation::AutomationRule::decl(),
         db::models::automation::CreateAutomationRule::decl(),
         db::models::automation::UpdateAutomationRule::decl(),

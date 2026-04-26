@@ -1,0 +1,74 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT id AS \"id!: Uuid\", workspace_id AS \"workspace_id!: Uuid\",\n                   action_kind, action_summary, decision, reasoning, decided_by,\n                   decided_at AS \"decided_at!: chrono::DateTime<chrono::Utc>\",\n                   resolved_decision,\n                   resolved_at AS \"resolved_at?: chrono::DateTime<chrono::Utc>\"\n                   FROM auto_approval_log\n                   ORDER BY decided_at DESC LIMIT 200",
+  "describe": {
+    "columns": [
+      {
+        "name": "id!: Uuid",
+        "ordinal": 0,
+        "type_info": "Blob"
+      },
+      {
+        "name": "workspace_id!: Uuid",
+        "ordinal": 1,
+        "type_info": "Blob"
+      },
+      {
+        "name": "action_kind",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "action_summary",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "decision",
+        "ordinal": 4,
+        "type_info": "Text"
+      },
+      {
+        "name": "reasoning",
+        "ordinal": 5,
+        "type_info": "Text"
+      },
+      {
+        "name": "decided_by",
+        "ordinal": 6,
+        "type_info": "Text"
+      },
+      {
+        "name": "decided_at!: chrono::DateTime<chrono::Utc>",
+        "ordinal": 7,
+        "type_info": "Text"
+      },
+      {
+        "name": "resolved_decision",
+        "ordinal": 8,
+        "type_info": "Text"
+      },
+      {
+        "name": "resolved_at?: chrono::DateTime<chrono::Utc>",
+        "ordinal": 9,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      true,
+      false,
+      false,
+      false,
+      false,
+      true,
+      false,
+      false,
+      true,
+      true
+    ]
+  },
+  "hash": "325d1e78d5abef161f7af050aff19ab6706c1a6c052595e4b7a5b699fb73458f"
+}
