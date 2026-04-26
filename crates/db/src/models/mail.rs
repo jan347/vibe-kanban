@@ -86,7 +86,8 @@ pub struct MailRecipient {
 pub struct MailAttachment {
     pub id: Uuid,
     pub message_id: Uuid,
-    pub inline_blob_path: String,
+    pub inline_blob_path: Option<String>,
+    pub artifact_id: Option<Uuid>,
     pub mime_type: Option<String>,
     pub size_bytes: Option<i64>,
     pub filename: Option<String>,
@@ -552,9 +553,7 @@ pub async fn broadcast_mail(
     }
     if let Some(response_options_json) = request.response_options_json.as_deref() {
         serde_json::from_str::<serde_json::Value>(response_options_json).map_err(|error| {
-            MailError::InvalidRequest(format!(
-                "response_options_json must be valid JSON: {error}"
-            ))
+            MailError::InvalidRequest(format!("response_options_json must be valid JSON: {error}"))
         })?;
     }
     validate_sender(pool, &request.sender).await?;
@@ -654,8 +653,7 @@ pub async fn broadcast_mail(
     .await;
 
     if let Err(err) = message_insert {
-        if let (Some(db_err), Some(key)) =
-            (err.as_database_error(), idempotency_key.as_deref())
+        if let (Some(db_err), Some(key)) = (err.as_database_error(), idempotency_key.as_deref())
             && db_err.is_unique_violation()
         {
             tx.rollback().await?;
@@ -756,6 +754,7 @@ pub async fn attach_blob_to_message(
             id               AS "id!: Uuid",
             message_id       AS "message_id!: Uuid",
             inline_blob_path,
+            artifact_id      AS "artifact_id?: Uuid",
             mime_type,
             size_bytes,
             filename,
@@ -782,6 +781,7 @@ pub async fn list_attachments_for_message(
             id               AS "id!: Uuid",
             message_id       AS "message_id!: Uuid",
             inline_blob_path,
+            artifact_id      AS "artifact_id?: Uuid",
             mime_type,
             size_bytes,
             filename,

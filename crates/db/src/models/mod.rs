@@ -1,3 +1,4 @@
+pub mod artifact;
 pub mod coding_agent_turn;
 pub mod execution_process;
 pub mod execution_process_logs;
@@ -6,11 +7,11 @@ pub mod file;
 pub mod mail;
 pub mod merge;
 pub mod model_preset;
-pub mod repo_bundle;
 pub mod project;
 pub mod prompt_template;
 pub mod pull_request;
 pub mod repo;
+pub mod repo_bundle;
 pub mod requests;
 pub mod scratch;
 pub mod session;

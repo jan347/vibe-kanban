@@ -192,7 +192,7 @@ export type BroadcastMailRequest = { thread_id: string | null, work_item_id: str
 
 export type BroadcastMailResponse = { message_id: string, thread_id: string, recipient_count: bigint, };
 
-export type MailAttachment = { id: string, message_id: string, inline_blob_path: string, mime_type: string | null, size_bytes: bigint | null, filename: string | null, created_at: string, };
+export type MailAttachment = { id: string, message_id: string, inline_blob_path: string | null, artifact_id: string | null, mime_type: string | null, size_bytes: bigint | null, filename: string | null, created_at: string, };
 
 export type CreateMailAttachment = { message_id: string, inline_blob_path: string, mime_type: string | null, size_bytes: bigint | null, filename: string | null, };
 
@@ -241,6 +241,16 @@ export type PromptTemplateRole = "implement" | "investigate" | "review" | "qa" |
 export type CreatePromptTemplate = { name: string, role: PromptTemplateRole, description: string | null, body_text: string, preset_id: string | null, bundle_id: string | null, tags_json: string | null, };
 
 export type UpdatePromptTemplate = { name: string | null, role: PromptTemplateRole | null, description: string | null, body_text: string | null, preset_id: string | null, bundle_id: string | null, tags_json: string | null, };
+
+export type Artifact = { id: string, work_item_id: string | null, kind: ArtifactKind, title: string, body_text: string | null, body_json: string | null, version: bigint, parent_artifact_id: string | null, created_by_kind: string, created_by_workspace_id: string | null, created_by_execution_process_id: string | null, created_at: string, accepted_at: string | null, };
+
+export type ArtifactKind = "excalidraw" | "markdown";
+
+export type CreateArtifact = { work_item_id: string | null, kind: ArtifactKind, title: string, body_text: string | null, body_json: string | null, parent_artifact_id: string | null, created_by_kind: string, created_by_workspace_id: string | null, created_by_execution_process_id: string | null, };
+
+export type AcceptArtifactRequest = { accepted: boolean, };
+
+export type SharedContextItem = { work_item_id: string, context_type: string, context_id: string, context_title: string | null, context_body: string | null, context_at: string | null, };
 
 export type Merge = { "type": "direct" } & DirectMerge | { "type": "pr" } & PrMerge;
 

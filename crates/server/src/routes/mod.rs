@@ -7,6 +7,7 @@ use tower_http::{compression::CompressionLayer, validate_request::ValidateReques
 use crate::{DeploymentImpl, middleware};
 
 pub mod approvals;
+pub mod artifacts;
 pub mod config;
 pub mod containers;
 pub mod filesystem;
@@ -20,9 +21,9 @@ pub mod host_relay;
 pub mod mail;
 pub mod model_presets;
 pub mod oauth;
-pub mod prompt_templates;
 pub mod organizations;
 pub mod preview;
+pub mod prompt_templates;
 pub mod relay_auth;
 pub mod releases;
 pub mod remote;
@@ -57,6 +58,7 @@ pub fn router(deployment: DeploymentImpl) -> IntoMakeService<Router> {
         .merge(prompt_templates::router())
         .merge(repo_bundles::router())
         .merge(work_items::router())
+        .merge(artifacts::router())
         .merge(scratch::router(&deployment))
         .merge(search::router(&deployment))
         .merge(preview::api_router())
