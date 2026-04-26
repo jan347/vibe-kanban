@@ -106,8 +106,14 @@ pub async fn check_dispatch_safety(
     .fetch_one(pool)
     .await?;
 
+    // Both sides must use the same timestamp format. started_at is stored
+    // as `YYYY-MM-DDTHH:MM:SS.sssZ` (strftime), so the cutoff has to use
+    // the same strftime mask — `datetime(...)` returns a space-separated
+    // form which compared lexicographically would silently miscount.
     let daily: i64 = sqlx::query_scalar!(
-        "SELECT COUNT(*) FROM dispatch_log WHERE workspace_id = ?1 AND started_at > datetime('now', '-1 day')",
+        "SELECT COUNT(*) FROM dispatch_log
+         WHERE workspace_id = ?1
+           AND started_at > strftime('%Y-%m-%dT%H:%M:%fZ','now','-1 day')",
         workspace_id
     )
     .fetch_one(pool)
@@ -250,16 +256,20 @@ pub async fn resolve_auto_approval(
     let now_str = chrono::Utc::now()
         .format("%Y-%m-%dT%H:%M:%S%.3fZ")
         .to_string();
-    sqlx::query!(
+    // Idempotent: only the first resolve wins. Two concurrent clicks
+    // race here; the loser's UPDATE matches zero rows and we skip the
+    // Approvals::respond call so we don't double-resolve the waiter.
+    let result = sqlx::query!(
         r#"UPDATE auto_approval_log
            SET resolved_decision = ?1, resolved_at = ?2
-           WHERE id = ?3"#,
+           WHERE id = ?3 AND resolved_decision IS NULL"#,
         payload.decision,
         now_str,
         id,
     )
     .execute(pool)
     .await?;
+    let we_resolved = result.rows_affected() > 0;
 
     let row = sqlx::query_as!(
         AutoApprovalLogEntry,
@@ -275,7 +285,7 @@ pub async fn resolve_auto_approval(
     .fetch_one(pool)
     .await?;
 
-    if let Some(approval_id) = row.approval_id.as_deref() {
+    if we_resolved && let Some(approval_id) = row.approval_id.as_deref() {
         let outcome = if payload.decision == "approved" {
             utils::approvals::ApprovalOutcome::Approved
         } else {

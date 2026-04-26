@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT COUNT(*) FROM dispatch_log WHERE workspace_id = ?1 AND started_at > datetime('now', '-1 day')",
+  "query": "SELECT COUNT(*) FROM dispatch_log\n         WHERE workspace_id = ?1\n           AND started_at > strftime('%Y-%m-%dT%H:%M:%fZ','now','-1 day')",
   "describe": {
     "columns": [
       {
@@ -16,5 +16,5 @@
       false
     ]
   },
-  "hash": "918672a608bdbb9894984c5993b09916cccb765519ca2294fc95c27b82be56c7"
+  "hash": "05b1a71cae32b9e2403c02f4f7aa795d5b6993c6bda41f1005b5f69c58159b2c"
 }

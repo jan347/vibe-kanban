@@ -111,7 +111,13 @@ pub async fn evaluate_and_log(
         action_summary: action_summary.to_string(),
     };
 
-    let decision = if let Some(preset_id) = config.auto_approval_model_preset_id {
+    // Honor the kill-switch BEFORE we spend tokens on the LLM. Without
+    // this guard a workspace with auto-approval disabled but a model
+    // preset still set could see the LLM return "approved" and unblock
+    // the gate behind the user's back.
+    let decision = if !config.auto_approval_enabled {
+        evaluate(&config, &req)
+    } else if let Some(preset_id) = config.auto_approval_model_preset_id {
         match resolve_anthropic_model(pool, preset_id).await {
             Ok(Some(model_id)) => match evaluate_with_anthropic(&config, &req, &model_id).await {
                 Ok(d) => d,
@@ -264,21 +270,24 @@ async fn evaluate_with_anthropic(
 }
 
 fn parse_supervisor_reply(text: &str) -> AutoApprovalDecision {
-    // Expect "<decision>:<reason>" — be lenient about whitespace and surrounding noise.
+    // Expect "<decision>:<reason>". Match the decision PREFIX only, not a
+    // substring of the whole line — a denial whose reason mentions
+    // "approved" must not be parsed as approval.
     let line = text.lines().find(|l| !l.trim().is_empty()).unwrap_or(text);
-    let lower = line.to_lowercase();
-    let (decision_str, approved) = if lower.contains("approved") {
-        ("approved", true)
-    } else if lower.contains("denied") {
-        ("denied", false)
-    } else {
-        ("escalated", false)
+    let (head, tail) = match line.split_once(':') {
+        Some((h, t)) => (h.trim().to_lowercase(), t.trim().to_string()),
+        None => (line.trim().to_lowercase(), String::new()),
     };
-    let reasoning = line
-        .split_once(':')
-        .map(|(_, r)| r.trim().to_string())
-        .filter(|r| !r.is_empty())
-        .unwrap_or_else(|| line.trim().to_string());
+    let (decision_str, approved) = match head.as_str() {
+        "approved" | "approve" => ("approved", true),
+        "denied" | "deny" => ("denied", false),
+        _ => ("escalated", false),
+    };
+    let reasoning = if tail.is_empty() {
+        line.trim().to_string()
+    } else {
+        tail
+    };
     AutoApprovalDecision {
         approved,
         decision: decision_str.to_string(),
@@ -365,5 +374,14 @@ mod tests {
 
         let d = parse_supervisor_reply("the model is confused");
         assert_eq!(d.decision, "escalated");
+    }
+
+    #[test]
+    fn parse_reply_rejects_substring_trap() {
+        // The substring-based parser used to match this as approved.
+        let d = parse_supervisor_reply("denied: not approved by policy");
+        assert_eq!(d.decision, "denied");
+        assert!(!d.approved);
+        assert!(d.reasoning.contains("not approved"));
     }
 }
