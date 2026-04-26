@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE mail_recipients\n                    SET read_at = strftime('%Y-%m-%dT%H:%M:%fZ','now')\n                  WHERE message_id = ?1\n                    AND recipient_kind = 'workspace'\n                    AND recipient_workspace_id = ?2\n                    AND read_at IS NULL",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "3dd6f333f0ac247b4b7ee946f67290c3137b89caf03b09ede8335b189b9f2b69"
+}

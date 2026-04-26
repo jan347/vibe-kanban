@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO mail_threads (id, work_item_id, subject, kind)\n               VALUES (?1, ?2, ?3, ?4)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 4
+    },
+    "nullable": []
+  },
+  "hash": "6bdfd441dc196a6cd593065a4291b4d3cc1bad80bb32fe33c86b5335449663e0"
+}

@@ -40,6 +40,7 @@ mod context;
 mod issue_assignees;
 mod issue_relationships;
 mod issue_tags;
+mod mail;
 mod organizations;
 mod remote_issues;
 mod remote_projects;
@@ -59,6 +60,7 @@ impl McpServer {
             + Self::issue_assignees_tools_router()
             + Self::issue_tags_tools_router()
             + Self::issue_relationships_tools_router()
+            + Self::mail_tools_router()
             + Self::task_attempts_tools_router()
             + Self::session_tools_router()
     }
@@ -66,6 +68,7 @@ impl McpServer {
     pub fn orchestrator_mode_router() -> rmcp::handler::server::tool::ToolRouter<Self> {
         let mut router = Self::context_tools_router()
             + Self::workspaces_tools_router()
+            + Self::mail_tools_router()
             + Self::session_tools_router();
         router.remove_route("list_workspaces");
         router.remove_route("delete_workspace");

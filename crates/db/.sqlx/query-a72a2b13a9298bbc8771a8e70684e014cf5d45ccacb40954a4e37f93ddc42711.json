@@ -1,0 +1,50 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT\n            v.workspace_id AS \"workspace_id!: Uuid\",\n            v.message_id AS \"message_id!: Uuid\",\n            v.thread_id AS \"thread_id!: Uuid\",\n            t.subject,\n            m.requires_response AS \"requires_response!: bool\",\n            v.created_at AS \"created_at!: DateTime<Utc>\"\n        FROM workspace_awaiting_reply v\n        JOIN mail_messages m ON m.id = v.message_id\n        JOIN mail_threads t ON t.id = v.thread_id\n        WHERE v.workspace_id = ?1\n        ORDER BY v.created_at DESC",
+  "describe": {
+    "columns": [
+      {
+        "name": "workspace_id!: Uuid",
+        "ordinal": 0,
+        "type_info": "Blob"
+      },
+      {
+        "name": "message_id!: Uuid",
+        "ordinal": 1,
+        "type_info": "Blob"
+      },
+      {
+        "name": "thread_id!: Uuid",
+        "ordinal": 2,
+        "type_info": "Blob"
+      },
+      {
+        "name": "subject",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "requires_response!: bool",
+        "ordinal": 4,
+        "type_info": "Integer"
+      },
+      {
+        "name": "created_at!: DateTime<Utc>",
+        "ordinal": 5,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      true,
+      true,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "a72a2b13a9298bbc8771a8e70684e014cf5d45ccacb40954a4e37f93ddc42711"
+}

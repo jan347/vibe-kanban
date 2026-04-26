@@ -172,6 +172,20 @@ export type ExecutionProcessRunReason = "setupscript" | "cleanupscript" | "archi
 
 export type ExecutionProcessRepoState = { id: string, execution_process_id: string, repo_id: string, before_head_commit: string | null, after_head_commit: string | null, merge_commit: string | null, created_at: Date, updated_at: Date, };
 
+export type MailThread = { id: string, work_item_id: string | null, subject: string, kind: MailThreadKind, created_at: string, closed_at: string | null, };
+
+export type MailThreadKind = "agent_human" | "agent_agent" | "broadcast";
+
+export type MailMessage = { id: string, thread_id: string, sender_kind: MailSenderKind, sender_workspace_id: string | null, sender_execution_process_id: string | null, body: string, requires_response: boolean, response_kind: MailResponseKind | null, response_options_json: string | null, expires_at: string | null, idempotency_key: string | null, created_at: string, };
+
+export type MailSenderKind = "workspace" | "human";
+
+export type MailResponseKind = "options" | "free_text" | "file" | "approval" | "none";
+
+export type MailRecipient = { id: string, message_id: string, recipient_kind: MailRecipientKind, recipient_workspace_id: string | null, read_at: string | null, responded_at: string | null, response_value_json: string | null, };
+
+export type MailRecipientKind = "workspace" | "human";
+
 export type Merge = { "type": "direct" } & DirectMerge | { "type": "pr" } & PrMerge;
 
 export type DirectMerge = { id: string, workspace_id: string, repo_id: string, merge_commit: string, target_branch_name: string, created_at: string, };
