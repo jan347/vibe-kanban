@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE safety_config SET\n           require_human_approval = COALESCE(?1, require_human_approval),\n           max_concurrent_dispatch = COALESCE(?2, max_concurrent_dispatch),\n           max_daily_dispatch = COALESCE(?3, max_daily_dispatch),\n           cooldown_seconds = COALESCE(?4, cooldown_seconds),\n           auto_approval_enabled = COALESCE(?5, auto_approval_enabled),\n           auto_approval_policy = COALESCE(?6, auto_approval_policy),\n           auto_approval_model_preset_id = COALESCE(?7, auto_approval_model_preset_id),\n           updated_at = ?8\n           WHERE scope = 'global'",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 8
+    },
+    "nullable": []
+  },
+  "hash": "7f7adf1e93d16130decdc3e28f16be6428a55a5192ee015be1e56cf6fc49b636"
+}

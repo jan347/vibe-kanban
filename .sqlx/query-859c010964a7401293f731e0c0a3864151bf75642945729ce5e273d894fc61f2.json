@@ -1,0 +1,86 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT id AS \"id!: Uuid\", workspace_id AS \"workspace_id?: Uuid\",\n           scope, require_human_approval AS \"require_human_approval!: bool\",\n           max_concurrent_dispatch AS \"max_concurrent_dispatch!: i64\",\n           max_daily_dispatch AS \"max_daily_dispatch!: i64\",\n           cooldown_seconds AS \"cooldown_seconds!: i64\",\n           auto_approval_enabled AS \"auto_approval_enabled!: bool\",\n           auto_approval_policy,\n           auto_approval_model_preset_id AS \"auto_approval_model_preset_id?: Uuid\",\n           created_at AS \"created_at!: chrono::DateTime<chrono::Utc>\",\n           updated_at AS \"updated_at!: chrono::DateTime<chrono::Utc>\"\n           FROM safety_config WHERE scope = 'global' LIMIT 1",
+  "describe": {
+    "columns": [
+      {
+        "name": "id!: Uuid",
+        "ordinal": 0,
+        "type_info": "Blob"
+      },
+      {
+        "name": "workspace_id?: Uuid",
+        "ordinal": 1,
+        "type_info": "Blob"
+      },
+      {
+        "name": "scope",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "require_human_approval!: bool",
+        "ordinal": 3,
+        "type_info": "Integer"
+      },
+      {
+        "name": "max_concurrent_dispatch!: i64",
+        "ordinal": 4,
+        "type_info": "Integer"
+      },
+      {
+        "name": "max_daily_dispatch!: i64",
+        "ordinal": 5,
+        "type_info": "Integer"
+      },
+      {
+        "name": "cooldown_seconds!: i64",
+        "ordinal": 6,
+        "type_info": "Integer"
+      },
+      {
+        "name": "auto_approval_enabled!: bool",
+        "ordinal": 7,
+        "type_info": "Integer"
+      },
+      {
+        "name": "auto_approval_policy",
+        "ordinal": 8,
+        "type_info": "Text"
+      },
+      {
+        "name": "auto_approval_model_preset_id?: Uuid",
+        "ordinal": 9,
+        "type_info": "Blob"
+      },
+      {
+        "name": "created_at!: chrono::DateTime<chrono::Utc>",
+        "ordinal": 10,
+        "type_info": "Text"
+      },
+      {
+        "name": "updated_at!: chrono::DateTime<chrono::Utc>",
+        "ordinal": 11,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      true,
+      true,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+      false,
+      false
+    ]
+  },
+  "hash": "859c010964a7401293f731e0c0a3864151bf75642945729ce5e273d894fc61f2"
+}

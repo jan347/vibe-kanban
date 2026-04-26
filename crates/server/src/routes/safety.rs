@@ -2,14 +2,28 @@ use axum::{
     Router,
     extract::{Path, State},
     response::Json as ResponseJson,
-    routing::get,
+    routing::{get, post},
 };
-use db::models::safety::{SafetyCheckResult, SafetyConfig, UpdateSafetyConfig};
+use db::models::safety::{
+    AutoApprovalDecision, AutoApprovalRequest, SafetyCheckResult, SafetyConfig, UpdateSafetyConfig,
+};
 use deployment::Deployment;
 use utils::response::ApiResponse;
 use uuid::Uuid;
 
 use crate::{DeploymentImpl, error::ApiError};
+
+const SAFETY_SELECT: &str = r#"SELECT id AS "id!: Uuid", workspace_id AS "workspace_id?: Uuid",
+    scope, require_human_approval AS "require_human_approval!: bool",
+    max_concurrent_dispatch AS "max_concurrent_dispatch!: i64",
+    max_daily_dispatch AS "max_daily_dispatch!: i64",
+    cooldown_seconds AS "cooldown_seconds!: i64",
+    auto_approval_enabled AS "auto_approval_enabled!: bool",
+    auto_approval_policy,
+    auto_approval_model_preset_id AS "auto_approval_model_preset_id?: Uuid",
+    created_at AS "created_at!: chrono::DateTime<chrono::Utc>",
+    updated_at AS "updated_at!: chrono::DateTime<chrono::Utc>"
+    FROM safety_config"#;
 
 pub async fn get_global_config(
     State(deployment): State<DeploymentImpl>,
@@ -22,12 +36,16 @@ pub async fn get_global_config(
            max_concurrent_dispatch AS "max_concurrent_dispatch!: i64",
            max_daily_dispatch AS "max_daily_dispatch!: i64",
            cooldown_seconds AS "cooldown_seconds!: i64",
+           auto_approval_enabled AS "auto_approval_enabled!: bool",
+           auto_approval_policy,
+           auto_approval_model_preset_id AS "auto_approval_model_preset_id?: Uuid",
            created_at AS "created_at!: chrono::DateTime<chrono::Utc>",
            updated_at AS "updated_at!: chrono::DateTime<chrono::Utc>"
            FROM safety_config WHERE scope = 'global' LIMIT 1"#
     )
     .fetch_one(pool)
     .await?;
+    let _ = SAFETY_SELECT;
     Ok(ResponseJson(ApiResponse::success(row)))
 }
 
@@ -45,12 +63,18 @@ pub async fn update_global_config(
            max_concurrent_dispatch = COALESCE(?2, max_concurrent_dispatch),
            max_daily_dispatch = COALESCE(?3, max_daily_dispatch),
            cooldown_seconds = COALESCE(?4, cooldown_seconds),
-           updated_at = ?5
+           auto_approval_enabled = COALESCE(?5, auto_approval_enabled),
+           auto_approval_policy = COALESCE(?6, auto_approval_policy),
+           auto_approval_model_preset_id = COALESCE(?7, auto_approval_model_preset_id),
+           updated_at = ?8
            WHERE scope = 'global'"#,
         payload.require_human_approval,
         payload.max_concurrent_dispatch,
         payload.max_daily_dispatch,
         payload.cooldown_seconds,
+        payload.auto_approval_enabled,
+        payload.auto_approval_policy,
+        payload.auto_approval_model_preset_id,
         now_str
     )
     .execute(pool)
@@ -71,6 +95,9 @@ pub async fn check_dispatch_safety(
            max_concurrent_dispatch AS "max_concurrent_dispatch!: i64",
            max_daily_dispatch AS "max_daily_dispatch!: i64",
            cooldown_seconds AS "cooldown_seconds!: i64",
+           auto_approval_enabled AS "auto_approval_enabled!: bool",
+           auto_approval_policy,
+           auto_approval_model_preset_id AS "auto_approval_model_preset_id?: Uuid",
            created_at AS "created_at!: chrono::DateTime<chrono::Utc>",
            updated_at AS "updated_at!: chrono::DateTime<chrono::Utc>"
            FROM safety_config
@@ -123,6 +150,54 @@ pub async fn check_dispatch_safety(
     })))
 }
 
+pub async fn auto_approve(
+    State(deployment): State<DeploymentImpl>,
+    ResponseJson(payload): ResponseJson<AutoApprovalRequest>,
+) -> Result<ResponseJson<ApiResponse<AutoApprovalDecision>>, ApiError> {
+    let pool = &deployment.db().pool;
+
+    let config = sqlx::query_as!(
+        SafetyConfig,
+        r#"SELECT id AS "id!: Uuid", workspace_id AS "workspace_id?: Uuid",
+           scope, require_human_approval AS "require_human_approval!: bool",
+           max_concurrent_dispatch AS "max_concurrent_dispatch!: i64",
+           max_daily_dispatch AS "max_daily_dispatch!: i64",
+           cooldown_seconds AS "cooldown_seconds!: i64",
+           auto_approval_enabled AS "auto_approval_enabled!: bool",
+           auto_approval_policy,
+           auto_approval_model_preset_id AS "auto_approval_model_preset_id?: Uuid",
+           created_at AS "created_at!: chrono::DateTime<chrono::Utc>",
+           updated_at AS "updated_at!: chrono::DateTime<chrono::Utc>"
+           FROM safety_config
+           WHERE (scope = 'workspace' AND workspace_id = ?1) OR scope = 'global'
+           ORDER BY CASE WHEN scope = 'workspace' THEN 0 ELSE 1 END
+           LIMIT 1"#,
+        payload.workspace_id,
+    )
+    .fetch_one(pool)
+    .await?;
+
+    let decision = services::services::auto_approval::evaluate(&config, &payload);
+
+    let id = Uuid::new_v4();
+    sqlx::query!(
+        r#"INSERT INTO auto_approval_log
+           (id, workspace_id, action_kind, action_summary, decision, reasoning, decided_by)
+           VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)"#,
+        id,
+        payload.workspace_id,
+        payload.action_kind,
+        payload.action_summary,
+        decision.decision,
+        decision.reasoning,
+        decision.decided_by,
+    )
+    .execute(pool)
+    .await?;
+
+    Ok(ResponseJson(ApiResponse::success(decision)))
+}
+
 pub fn router() -> Router<DeploymentImpl> {
     Router::new()
         .route(
@@ -130,4 +205,5 @@ pub fn router() -> Router<DeploymentImpl> {
             get(get_global_config).patch(update_global_config),
         )
         .route("/safety/check/{workspace_id}", get(check_dispatch_safety))
+        .route("/safety/auto-approve", post(auto_approve))
 }

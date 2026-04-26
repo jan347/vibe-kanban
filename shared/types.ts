@@ -258,11 +258,17 @@ export type DispatchStatus = "pending" | "running" | "completed" | "failed" | "c
 
 export type CreateDispatch = { work_item_id: string, workspace_id: string, prompt_text: string, prompt_template_id: string | null, model_preset_id: string | null, };
 
-export type SafetyConfig = { id: string, workspace_id: string | null, scope: string, require_human_approval: boolean, max_concurrent_dispatch: bigint, max_daily_dispatch: bigint, cooldown_seconds: bigint, created_at: string, updated_at: string, };
+export type SafetyConfig = { id: string, workspace_id: string | null, scope: string, require_human_approval: boolean, max_concurrent_dispatch: bigint, max_daily_dispatch: bigint, cooldown_seconds: bigint, auto_approval_enabled: boolean, auto_approval_policy: string | null, auto_approval_model_preset_id: string | null, created_at: string, updated_at: string, };
 
-export type UpdateSafetyConfig = { require_human_approval: boolean | null, max_concurrent_dispatch: bigint | null, max_daily_dispatch: bigint | null, cooldown_seconds: bigint | null, };
+export type UpdateSafetyConfig = { require_human_approval: boolean | null, max_concurrent_dispatch: bigint | null, max_daily_dispatch: bigint | null, cooldown_seconds: bigint | null, auto_approval_enabled: boolean | null, auto_approval_policy: string | null, auto_approval_model_preset_id: string | null, };
 
 export type SafetyCheckResult = { allowed: boolean, reason: string | null, active_dispatches: bigint, daily_dispatches: bigint, require_human_approval: boolean, };
+
+export type AutoApprovalLogEntry = { id: string, workspace_id: string, action_kind: string, action_summary: string, decision: string, reasoning: string | null, decided_by: string, decided_at: string, };
+
+export type AutoApprovalRequest = { workspace_id: string, action_kind: string, action_summary: string, };
+
+export type AutoApprovalDecision = { approved: boolean, decision: string, reasoning: string, decided_by: string, };
 
 export type AutomationRule = { id: string, workspace_id: string, work_item_id: string, name: string, trigger_kind: string, trigger_config: string, prompt_template_id: string | null, model_preset_id: string | null, prompt_override: string | null, enabled: boolean, last_fired_at: string | null, created_at: string, updated_at: string, };
 

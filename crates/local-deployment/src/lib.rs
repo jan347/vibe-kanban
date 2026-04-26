@@ -262,6 +262,7 @@ impl Deployment for LocalDeployment {
             let rc = remote_client.clone().ok();
             PrMonitorService::spawn(db, analytics, container, rc, pr_sync_notify.clone()).await;
         }
+        services::services::automation_runner::spawn(db.clone().pool);
 
         let deployment = Self {
             config,
