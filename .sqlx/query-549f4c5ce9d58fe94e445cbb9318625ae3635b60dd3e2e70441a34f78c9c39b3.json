@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT model_id FROM model_presets WHERE id = ?1",
+  "describe": {
+    "columns": [
+      {
+        "name": "model_id",
+        "ordinal": 0,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "549f4c5ce9d58fe94e445cbb9318625ae3635b60dd3e2e70441a34f78c9c39b3"
+}

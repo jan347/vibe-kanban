@@ -19,6 +19,13 @@ use uuid::Uuid;
 const ANTHROPIC_API_URL: &str = "https://api.anthropic.com/v1/messages";
 const ANTHROPIC_API_VERSION: &str = "2023-06-01";
 const LLM_TIMEOUT_SECS: u64 = 12;
+
+/// Override the supervisor's HTTP target. Setting either env var routes the
+/// request through a Bifrost-style OpenAI-Chat-Completions proxy at
+/// `<base>/v1/chat/completions` instead of calling Anthropic directly. The
+/// proxy holds the upstream credentials (Bedrock, Vertex, etc.), so the
+/// supervisor sends no auth header in proxy mode.
+const PROXY_BASE_ENVS: &[&str] = &["BIFROST_BASE_URL", "LLM_BASE_URL"];
 const SUPERVISOR_SYSTEM_PROMPT: &str = "You are an auto-approval supervisor for an AI agent platform. \
 Decide whether the proposed agent action is safe to run unattended given the workspace policy. \
 Reply with EXACTLY one line in the format `<decision>:<one-sentence reason>` where decision is one of: approved, denied, escalated. \
@@ -118,8 +125,8 @@ pub async fn evaluate_and_log(
     let decision = if !config.auto_approval_enabled {
         evaluate(&config, &req)
     } else if let Some(preset_id) = config.auto_approval_model_preset_id {
-        match resolve_anthropic_model(pool, preset_id).await {
-            Ok(Some(model_id)) => match evaluate_with_anthropic(&config, &req, &model_id).await {
+        match resolve_supervisor_model(pool, preset_id).await {
+            Ok(Some(model_id)) => match evaluate_with_llm(&config, &req, &model_id).await {
                 Ok(d) => d,
                 Err(err) => {
                     tracing::warn!(?err, "LLM supervisor failed; falling back to policy");
@@ -165,23 +172,32 @@ fn escalated(reason: &str) -> AutoApprovalDecision {
     }
 }
 
-async fn resolve_anthropic_model(
+async fn resolve_supervisor_model(
     pool: &SqlitePool,
     preset_id: Uuid,
 ) -> Result<Option<String>, sqlx::Error> {
+    // With Bifrost in front, the model_id is just whatever slug the proxy
+    // recognizes (e.g. `bedrock-claude-opus-4`, `vertex-gemini-2.5-pro`,
+    // `claude-opus-4-7`). We don't filter by executor anymore.
     let row = sqlx::query!(
-        r#"SELECT executor, model_id FROM model_presets WHERE id = ?1"#,
+        r#"SELECT model_id FROM model_presets WHERE id = ?1"#,
         preset_id
     )
     .fetch_optional(pool)
     .await?;
-    Ok(row.and_then(|r| {
-        if r.executor == "CLAUDE_CODE" {
-            Some(r.model_id)
-        } else {
-            None
+    Ok(row.map(|r| r.model_id))
+}
+
+fn proxy_base_url() -> Option<String> {
+    for name in PROXY_BASE_ENVS {
+        if let Ok(v) = std::env::var(name) {
+            let trimmed = v.trim().trim_end_matches('/').to_string();
+            if !trimmed.is_empty() {
+                return Some(trimmed);
+            }
         }
-    }))
+    }
+    None
 }
 
 #[derive(Debug)]
@@ -195,9 +211,12 @@ enum LlmError {
 impl std::fmt::Display for LlmError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            LlmError::NoApiKey => write!(f, "ANTHROPIC_API_KEY not set"),
+            LlmError::NoApiKey => write!(
+                f,
+                "no LLM credentials: set BIFROST_BASE_URL/LLM_BASE_URL for proxy mode, or ANTHROPIC_API_KEY for direct mode"
+            ),
             LlmError::Http(e) => write!(f, "http: {e}"),
-            LlmError::Status(s, b) => write!(f, "anthropic {s}: {b}"),
+            LlmError::Status(s, b) => write!(f, "llm {s}: {b}"),
             LlmError::Parse(m) => write!(f, "parse: {m}"),
         }
     }
@@ -218,12 +237,27 @@ struct AnthropicContent {
     text: String,
 }
 
-async fn evaluate_with_anthropic(
+#[derive(Deserialize)]
+struct OpenAiResponse {
+    choices: Vec<OpenAiChoice>,
+}
+
+#[derive(Deserialize)]
+struct OpenAiChoice {
+    message: OpenAiMessage,
+}
+
+#[derive(Deserialize)]
+struct OpenAiMessage {
+    #[serde(default)]
+    content: String,
+}
+
+async fn evaluate_with_llm(
     config: &SafetyConfig,
     req: &AutoApprovalRequest,
     model_id: &str,
 ) -> Result<AutoApprovalDecision, LlmError> {
-    let api_key = std::env::var("ANTHROPIC_API_KEY").map_err(|_| LlmError::NoApiKey)?;
     let policy = config
         .auto_approval_policy
         .as_deref()
@@ -232,17 +266,56 @@ async fn evaluate_with_anthropic(
         "Workspace policy:\n{policy}\n\nProposed action:\n  kind: {}\n  summary: {}\n\nDecide.",
         req.action_kind, req.action_summary
     );
+
+    let client = reqwest::Client::builder()
+        .timeout(std::time::Duration::from_secs(LLM_TIMEOUT_SECS))
+        .build()
+        .map_err(LlmError::Http)?;
+
+    if let Some(base) = proxy_base_url() {
+        // Bifrost-shaped OpenAI Chat Completions. The proxy owns upstream
+        // auth (Bedrock, Vertex, Anthropic, OpenAI, …); we send no key.
+        let url = format!("{base}/v1/chat/completions");
+        let body = serde_json::json!({
+            "model": model_id,
+            "max_tokens": 200,
+            "messages": [
+                {"role": "system", "content": SUPERVISOR_SYSTEM_PROMPT},
+                {"role": "user", "content": user_prompt},
+            ],
+        });
+        let resp = client
+            .post(&url)
+            .json(&body)
+            .send()
+            .await
+            .map_err(LlmError::Http)?;
+        let status = resp.status();
+        let bytes = resp.bytes().await.map_err(LlmError::Http)?;
+        if !status.is_success() {
+            let snippet = String::from_utf8_lossy(&bytes).chars().take(400).collect();
+            return Err(LlmError::Status(status.as_u16(), snippet));
+        }
+        let parsed: OpenAiResponse =
+            serde_json::from_slice(&bytes).map_err(|e| LlmError::Parse(e.to_string()))?;
+        let text = parsed
+            .choices
+            .into_iter()
+            .next()
+            .map(|c| c.message.content.trim().to_string())
+            .filter(|t| !t.is_empty())
+            .ok_or_else(|| LlmError::Parse("no choices in response".into()))?;
+        return Ok(parse_supervisor_reply(&text));
+    }
+
+    // Direct Anthropic fallback.
+    let api_key = std::env::var("ANTHROPIC_API_KEY").map_err(|_| LlmError::NoApiKey)?;
     let body = serde_json::json!({
         "model": model_id,
         "max_tokens": 200,
         "system": SUPERVISOR_SYSTEM_PROMPT,
         "messages": [{"role": "user", "content": user_prompt}],
     });
-
-    let client = reqwest::Client::builder()
-        .timeout(std::time::Duration::from_secs(LLM_TIMEOUT_SECS))
-        .build()
-        .map_err(LlmError::Http)?;
     let resp = client
         .post(ANTHROPIC_API_URL)
         .header("x-api-key", api_key)
