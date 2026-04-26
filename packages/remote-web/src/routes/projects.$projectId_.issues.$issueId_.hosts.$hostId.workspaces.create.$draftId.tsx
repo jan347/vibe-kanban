@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { requireAuthenticated } from "@remote/shared/lib/route-auth";
-import { projectSearchValidator } from "@vibe/web-core/project-search";
+import { projectSearchValidator } from "@gencap/web-core/project-search";
 import { RemoteProjectKanbanShell } from "@remote/pages/RemoteProjectKanbanShell";
 
 export const Route = createFileRoute(

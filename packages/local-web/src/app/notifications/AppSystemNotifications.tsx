@@ -50,7 +50,7 @@ export function AppSystemNotifications() {
       displayedNotificationIdsRef.current.add(group.id);
       void showSystemNotification({
         id: group.id,
-        title: 'Vibe Kanban',
+        title: 'GenCap Control Room',
         body: getGroupedNotificationText(group, membersByUserId),
         deeplinkPath: group.deeplinkPath ?? undefined,
       });

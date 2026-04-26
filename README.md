@@ -1,32 +1,32 @@
 <p align="center">
   <a href="https://vibekanban.com">
     <picture>
-      <source srcset="packages/public/vibe-kanban-logo-dark.svg" media="(prefers-color-scheme: dark)">
-      <source srcset="packages/public/vibe-kanban-logo.svg" media="(prefers-color-scheme: light)">
-      <img src="packages/public/vibe-kanban-logo.svg" alt="Vibe Kanban Logo">
+      <source srcset="packages/public/gencap-logo-dark.svg" media="(prefers-color-scheme: dark)">
+      <source srcset="packages/public/gencap-logo.svg" media="(prefers-color-scheme: light)">
+      <img src="packages/public/gencap-logo.svg" alt="GenCap Control Room Logo">
     </picture>
   </a>
 </p>
 
 <p align="center">Get 10X more out of Claude Code, Gemini CLI, Codex, Amp and other coding agents...</p>
 <p align="center">
-  <a href="https://www.npmjs.com/package/vibe-kanban"><img alt="npm" src="https://img.shields.io/npm/v/vibe-kanban?style=flat-square" /></a>
-  <a href="https://github.com/BloopAI/vibe-kanban/blob/main/.github/workflows/publish.yml"><img alt="Build status" src="https://img.shields.io/github/actions/workflow/status/BloopAI/vibe-kanban/.github%2Fworkflows%2Fpublish.yml" /></a>
-  <a href="https://deepwiki.com/BloopAI/vibe-kanban"><img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki"></a>
+  <a href="https://www.npmjs.com/package/gencap"><img alt="npm" src="https://img.shields.io/npm/v/gencap?style=flat-square" /></a>
+  <a href="https://github.com/BloopAI/gencap/blob/main/.github/workflows/publish.yml"><img alt="Build status" src="https://img.shields.io/github/actions/workflow/status/BloopAI/gencap/.github%2Fworkflows%2Fpublish.yml" /></a>
+  <a href="https://deepwiki.com/BloopAI/gencap"><img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki"></a>
 </p>
 
 <h1 align="center">
-  <strong>Vibe Kanban is sunsetting.</strong>
+  <strong>GenCap Control Room is sunsetting.</strong>
   <a href="https://www.vibekanban.com/blog/shutdown">Read the announcement.</a>
 </h1>
 
-![](packages/public/vibe-kanban-screenshot-overview.png)
+![](packages/public/gencap-screenshot-overview.png)
 
 ## Overview
 
 In a world where software engineers spend most of their time planning and reviewing coding agents, the most impactful way to ship more is to get faster at planning and review.
 
-Vibe Kanban is built for this. Use kanban issues to plan work, either privately or with your team. When you're ready to begin, create workspaces where coding agents can execute.
+GenCap Control Room is built for this. Use kanban issues to plan work, either privately or with your team. When you're ready to begin, create workspaces where coding agents can execute.
 
 - **Plan with kanban issues** — create, prioritise, and assign issues on a kanban board
 - **Run coding agents in workspaces** — each workspace gives an agent a branch, a terminal, and a dev server
@@ -35,12 +35,12 @@ Vibe Kanban is built for this. Use kanban issues to plan work, either privately 
 - **Switch between 10+ coding agents** — Claude Code, Codex, Gemini CLI, GitHub Copilot, Amp, Cursor, OpenCode, Droid, CCR, and Qwen Code
 - **Create pull requests and merge** — open PRs with AI-generated descriptions, review on GitHub, and merge
 
-![](packages/public/vibe-kanban-screenshot-workspace.png)
+![](packages/public/gencap-screenshot-workspace.png)
 
 One command. Describe the work, review the diff, ship it.
 
 ```bash
-npx vibe-kanban
+npx gencap
 ```
 
 
@@ -49,7 +49,7 @@ npx vibe-kanban
 Make sure you have authenticated with your favourite coding agent. A full list of supported coding agents can be found in the [docs](https://vibekanban.com/docs/supported-coding-agents). Then in your terminal run:
 
 ```bash
-npx vibe-kanban
+npx gencap
 ```
 
 ## Documentation
@@ -58,15 +58,15 @@ Head to the [website](https://vibekanban.com/docs) for the latest documentation 
 
 ## Self-Hosting
 
-Want to host your own Vibe Kanban Cloud instance? See our [self-hosting guide](https://vibekanban.com/docs/self-hosting/deploy-docker).
+Want to host your own GenCap Control Room Cloud instance? See our [self-hosting guide](https://vibekanban.com/docs/self-hosting/deploy-docker).
 
 ## Support
 
-We use [GitHub Discussions](https://github.com/BloopAI/vibe-kanban/discussions) for feature requests. Please open a discussion to create a feature request. For bugs please open an issue on this repo.
+We use [GitHub Discussions](https://github.com/BloopAI/gencap/discussions) for feature requests. Please open a discussion to create a feature request. For bugs please open an issue on this repo.
 
 ## Contributing
 
-We would prefer that ideas and changes are first raised with the core team via [GitHub Discussions](https://github.com/BloopAI/vibe-kanban/discussions) or [Discord](https://discord.gg/AC4nwVtJM3), where we can discuss implementation details and alignment with the existing roadmap. Please do not open PRs without first discussing your proposal with the team.
+We would prefer that ideas and changes are first raised with the core team via [GitHub Discussions](https://github.com/BloopAI/gencap/discussions) or [Discord](https://discord.gg/AC4nwVtJM3), where we can discuss implementation details and alignment with the existing roadmap. Please do not open PRs without first discussing your proposal with the team.
 
 ## Development
 
@@ -133,7 +133,7 @@ The following environment variables can be configured at build time or runtime:
 
 #### Self-Hosting with a Reverse Proxy or Custom Domain
 
-When running Vibe Kanban behind a reverse proxy (e.g., nginx, Caddy, Traefik) or on a custom domain, you must set the `VK_ALLOWED_ORIGINS` environment variable. Without this, the browser's Origin header won't match the backend's expected host, and API requests will be rejected with a 403 Forbidden error.
+When running GenCap Control Room behind a reverse proxy (e.g., nginx, Caddy, Traefik) or on a custom domain, you must set the `VK_ALLOWED_ORIGINS` environment variable. Without this, the browser's Origin header won't match the backend's expected host, and API requests will be rejected with a 403 Forbidden error.
 
 Set it to the full origin URL(s) where your frontend is accessible:
 
@@ -147,7 +147,7 @@ VK_ALLOWED_ORIGINS=https://vk.example.com,https://vk-staging.example.com
 
 ### Remote Deployment
 
-When running Vibe Kanban on a remote server (e.g., via systemctl, Docker, or cloud hosting), you can configure your editor to open projects via SSH:
+When running GenCap Control Room on a remote server (e.g., via systemctl, Docker, or cloud hosting), you can configure your editor to open projects via SSH:
 
 1. **Access via tunnel**: Use Cloudflare Tunnel, ngrok, or similar to expose the web UI
 2. **Configure remote SSH** in Settings → Editor Integration:

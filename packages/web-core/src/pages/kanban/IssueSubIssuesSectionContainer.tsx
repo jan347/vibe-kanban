@@ -8,12 +8,12 @@ import { useAppNavigation } from '@/shared/hooks/useAppNavigation';
 import { useActions } from '@/shared/hooks/useActions';
 import { Actions } from '@/shared/actions';
 import { bulkUpdateIssues } from '@/shared/lib/remoteApi';
-import { ConfirmDialog } from '@vibe/ui/components/ConfirmDialog';
+import { ConfirmDialog } from '@gencap/ui/components/ConfirmDialog';
 import {
   IssueSubIssuesSection,
   type SubIssueData,
-} from '@vibe/ui/components/IssueSubIssuesSection';
-import type { SectionAction } from '@vibe/ui/components/CollapsibleSectionHeader';
+} from '@gencap/ui/components/IssueSubIssuesSection';
+import type { SectionAction } from '@gencap/ui/components/CollapsibleSectionHeader';
 
 interface IssueSubIssuesSectionContainerProps {
   issueId: string;

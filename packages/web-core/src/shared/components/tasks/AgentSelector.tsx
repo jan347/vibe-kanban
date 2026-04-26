@@ -1,12 +1,12 @@
 import { Bot, ArrowDown } from 'lucide-react';
-import { Button } from '@vibe/ui/components/Button';
+import { Button } from '@gencap/ui/components/Button';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@vibe/ui/components/DropdownMenu';
-import { Label } from '@vibe/ui/components/Label';
+} from '@gencap/ui/components/DropdownMenu';
+import { Label } from '@gencap/ui/components/Label';
 import type { ExecutorProfileId, BaseCodingAgent } from 'shared/types';
 
 interface AgentSelectorProps {

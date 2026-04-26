@@ -39,7 +39,7 @@ import { getIdeName } from '@/shared/lib/ideName';
 import { cn, playSound } from '@/shared/lib/utils';
 import { isTauriApp } from '@/shared/lib/platform';
 import { useAppNavigation } from '@/shared/hooks/useAppNavigation';
-import { PrimaryButton } from '@vibe/ui/components/PrimaryButton';
+import { PrimaryButton } from '@gencap/ui/components/PrimaryButton';
 
 type SoundOption = {
   value: SoundFile;
@@ -115,7 +115,7 @@ const SOCIAL_LINKS = [
   },
   {
     label: 'GitHub',
-    href: 'https://github.com/BloopAI/vibe-kanban',
+    href: 'https://github.com/BloopAI/gencap',
     icon: GithubLogoIcon,
   },
   {
@@ -177,8 +177,8 @@ export function LandingPage() {
 
   const logoSrc =
     resolveTheme(theme) === 'dark'
-      ? '/vibe-kanban-logo-dark.svg'
-      : '/vibe-kanban-logo.svg';
+      ? '/gencap-logo-dark.svg'
+      : '/gencap-logo.svg';
 
   useEffect(() => {
     if (!config || initialized) return;
@@ -337,7 +337,11 @@ export function LandingPage() {
         {/* Header */}
         <header className="shrink-0 space-y-base p-double pb-base">
           <div className="flex items-center justify-between">
-            <img src={logoSrc} alt="Vibe Kanban" className="h-8 w-auto logo" />
+            <img
+              src={logoSrc}
+              alt="GenCap Control Room"
+              className="h-8 w-auto logo"
+            />
             <div className="flex flex-wrap items-center gap-2">
               {SOCIAL_LINKS.map((link) => (
                 <PrimaryButton
@@ -357,7 +361,7 @@ export function LandingPage() {
                 weight="fill"
               />
               <p className="text-sm text-normal">
-                Vibe Kanban runs AI coding agents with{' '}
+                GenCap Control Room runs AI coding agents with{' '}
                 <code>--dangerously-skip-permissions</code> /{' '}
                 <code>--yolo</code> by default. Always review what agents are
                 doing.{' '}

@@ -40,7 +40,7 @@ fn main() {
         // Create a dummy index.html
         let dummy_html = r#"<!DOCTYPE html>
 <html><head><title>Build web app first</title></head>
-<body><h1>Please build @vibe/local-web first</h1></body></html>"#;
+<body><h1>Please build @gencap/local-web first</h1></body></html>"#;
 
         fs::write(dist_path.join("index.html"), dummy_html).unwrap();
     }

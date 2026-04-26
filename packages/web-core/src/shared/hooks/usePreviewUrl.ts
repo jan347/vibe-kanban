@@ -81,7 +81,7 @@ const isBetterPreviewUrlCandidate = (
   return false;
 };
 
-const getVibeKanbanPort = (): string | null => {
+const getGenCapControlRoomPort = (): string | null => {
   if (typeof window !== 'undefined' && window.location.port) {
     return window.location.port;
   }
@@ -156,7 +156,7 @@ export const detectPreviewUrl = (line: string): PreviewUrlInfo | null => {
     /:(\d(?:[\d\s]{0,8}\d))(?=\/|\s|$)/g,
     (_match, rawPort) => `:${rawPort.replace(/\s+/g, '')}`
   );
-  const vibeKanbanPort = getVibeKanbanPort();
+  const vibeKanbanPort = getGenCapControlRoomPort();
 
   const fullUrlMatch = urlPatterns[0].exec(normalized);
   if (fullUrlMatch) {

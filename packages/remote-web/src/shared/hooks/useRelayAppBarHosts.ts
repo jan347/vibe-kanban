@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import type { AppBarHost } from "@vibe/ui/components/AppBar";
+import type { AppBarHost } from "@gencap/ui/components/AppBar";
 import type { RelayHost } from "shared/remote-types";
 import { listPairedRelayHosts } from "@/shared/lib/relayPairingStorage";
 import { listRelayHosts } from "@/shared/lib/remoteApi";

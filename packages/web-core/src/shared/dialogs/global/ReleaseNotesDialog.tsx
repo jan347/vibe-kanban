@@ -4,15 +4,15 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@vibe/ui/components/KeyboardDialog';
-import { Button } from '@vibe/ui/components/Button';
+} from '@gencap/ui/components/KeyboardDialog';
+import { Button } from '@gencap/ui/components/Button';
 import { AlertCircle, ExternalLink, Loader2 } from 'lucide-react';
 import { create, useModal } from '@ebay/nice-modal-react';
 import { defineModal, type NoProps } from '@/shared/lib/modals';
 import { useReleases } from '@/shared/hooks/useReleases';
 import { SimpleMarkdown } from '@/shared/components/SimpleMarkdown';
 
-const GITHUB_RELEASES_URL = 'https://github.com/BloopAI/vibe-kanban/releases';
+const GITHUB_RELEASES_URL = 'https://github.com/BloopAI/gencap/releases';
 
 function formatDate(dateStr: string): string {
   try {

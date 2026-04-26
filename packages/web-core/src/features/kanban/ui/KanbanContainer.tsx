@@ -49,17 +49,17 @@ import {
   KanbanCards,
   KanbanHeader,
   type DropResult,
-} from '@vibe/ui/components/KanbanBoard';
-import { KanbanCardContent } from '@vibe/ui/components/KanbanCardContent';
+} from '@gencap/ui/components/KanbanBoard';
+import { KanbanCardContent } from '@gencap/ui/components/KanbanCardContent';
 import {
   IssueWorkspaceCard,
   type WorkspaceWithStats,
   type WorkspacePr,
-} from '@vibe/ui/components/IssueWorkspaceCard';
+} from '@gencap/ui/components/IssueWorkspaceCard';
 import { resolveRelationshipsForIssue } from '@/shared/lib/resolveRelationships';
-import { KanbanFilterBar } from '@vibe/ui/components/KanbanFilterBar';
-import { ViewNavTabs } from '@vibe/ui/components/ViewNavTabs';
-import { IssueListView } from '@vibe/ui/components/IssueListView';
+import { KanbanFilterBar } from '@gencap/ui/components/KanbanFilterBar';
+import { ViewNavTabs } from '@gencap/ui/components/ViewNavTabs';
+import { IssueListView } from '@gencap/ui/components/IssueListView';
 import { CommandBarDialog } from '@/shared/dialogs/command-bar/CommandBarDialog';
 import { KanbanFiltersDialog } from '@/shared/dialogs/kanban/KanbanFiltersDialog';
 import {
@@ -67,7 +67,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@vibe/ui/components/Dropdown';
+} from '@gencap/ui/components/Dropdown';
 import { SearchableTagDropdownContainer } from '@/shared/components/SearchableTagDropdownContainer';
 import type { IssuePriority } from 'shared/remote-types';
 import { useIssueMultiSelect } from '@/shared/hooks/useIssueMultiSelect';

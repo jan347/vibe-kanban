@@ -29,14 +29,14 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@vibe/ui/components/Dropdown';
+} from '@gencap/ui/components/Dropdown';
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from '@vibe/ui/components/Popover';
-import { PrimaryButton } from '@vibe/ui/components/PrimaryButton';
-import { Switch } from '@vibe/ui/components/Switch';
+} from '@gencap/ui/components/Popover';
+import { PrimaryButton } from '@gencap/ui/components/PrimaryButton';
+import { Switch } from '@gencap/ui/components/Switch';
 import { useUserOrganizations } from '@/shared/hooks/useUserOrganizations';
 import { useAuth } from '@/shared/hooks/auth/useAuth';
 import { OAuthDialog } from '@/shared/dialogs/global/OAuthDialog';
@@ -54,7 +54,7 @@ import {
   type Project,
 } from 'shared/remote-types';
 import { getRandomPresetColor, PRESET_COLORS } from '@/shared/lib/colors';
-import { InlineColorPicker } from '@vibe/ui/components/ColorPicker';
+import { InlineColorPicker } from '@gencap/ui/components/ColorPicker';
 import { cn } from '@/shared/lib/utils';
 import {
   SettingsCard,

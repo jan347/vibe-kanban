@@ -17,6 +17,7 @@ import { Route as AppWorkspacesRouteImport } from './routes/_app.workspaces'
 import { Route as AppNotificationsRouteImport } from './routes/_app.notifications'
 import { Route as AppMailRouteImport } from './routes/_app.mail'
 import { Route as AppExportRouteImport } from './routes/_app.export'
+import { Route as AppAutomationRouteImport } from './routes/_app.automation'
 import { Route as WorkspacesWorkspaceIdVscodeRouteImport } from './routes/workspaces.$workspaceId.vscode'
 import { Route as AppWorkspacesElectricTestRouteImport } from './routes/_app.workspaces_.electric-test'
 import { Route as AppWorkspacesCreateRouteImport } from './routes/_app.workspaces_.create'
@@ -72,6 +73,11 @@ const AppMailRoute = AppMailRouteImport.update({
 const AppExportRoute = AppExportRouteImport.update({
   id: '/export',
   path: '/export',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAutomationRoute = AppAutomationRouteImport.update({
+  id: '/automation',
+  path: '/automation',
   getParentRoute: () => AppRoute,
 } as any)
 const WorkspacesWorkspaceIdVscodeRoute =
@@ -181,6 +187,7 @@ const AppProjectsProjectIdIssuesIssueIdHostsHostIdWorkspacesCreateDraftIdRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/onboarding': typeof OnboardingRoute
+  '/automation': typeof AppAutomationRoute
   '/export': typeof AppExportRoute
   '/mail': typeof AppMailRouteWithChildren
   '/notifications': typeof AppNotificationsRoute
@@ -207,6 +214,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/onboarding': typeof OnboardingRoute
+  '/automation': typeof AppAutomationRoute
   '/export': typeof AppExportRoute
   '/mail': typeof AppMailRouteWithChildren
   '/notifications': typeof AppNotificationsRoute
@@ -235,6 +243,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_app': typeof AppRouteWithChildren
   '/onboarding': typeof OnboardingRoute
+  '/_app/automation': typeof AppAutomationRoute
   '/_app/export': typeof AppExportRoute
   '/_app/mail': typeof AppMailRouteWithChildren
   '/_app/notifications': typeof AppNotificationsRoute
@@ -263,6 +272,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/onboarding'
+    | '/automation'
     | '/export'
     | '/mail'
     | '/notifications'
@@ -289,6 +299,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/onboarding'
+    | '/automation'
     | '/export'
     | '/mail'
     | '/notifications'
@@ -316,6 +327,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_app'
     | '/onboarding'
+    | '/_app/automation'
     | '/_app/export'
     | '/_app/mail'
     | '/_app/notifications'
@@ -405,6 +417,13 @@ declare module '@tanstack/react-router' {
       path: '/export'
       fullPath: '/export'
       preLoaderRoute: typeof AppExportRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/automation': {
+      id: '/_app/automation'
+      path: '/automation'
+      fullPath: '/automation'
+      preLoaderRoute: typeof AppAutomationRouteImport
       parentRoute: typeof AppRoute
     }
     '/workspaces/$workspaceId/vscode': {
@@ -541,6 +560,7 @@ const AppMailRouteWithChildren =
   AppMailRoute._addFileChildren(AppMailRouteChildren)
 
 interface AppRouteChildren {
+  AppAutomationRoute: typeof AppAutomationRoute
   AppExportRoute: typeof AppExportRoute
   AppMailRoute: typeof AppMailRouteWithChildren
   AppNotificationsRoute: typeof AppNotificationsRoute
@@ -562,6 +582,7 @@ interface AppRouteChildren {
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppAutomationRoute: AppAutomationRoute,
   AppExportRoute: AppExportRoute,
   AppMailRoute: AppMailRouteWithChildren,
   AppNotificationsRoute: AppNotificationsRoute,

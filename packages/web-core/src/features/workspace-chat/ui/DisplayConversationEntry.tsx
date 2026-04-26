@@ -30,28 +30,28 @@ import {
   ScriptFixerDialog,
   type ScriptType,
 } from '@/shared/dialogs/scripts/ScriptFixerDialog';
-import { ChatToolSummary } from '@vibe/ui/components/ChatToolSummary';
-import { ChatTodoList } from '@vibe/ui/components/ChatTodoList';
+import { ChatToolSummary } from '@gencap/ui/components/ChatToolSummary';
+import { ChatTodoList } from '@gencap/ui/components/ChatTodoList';
 import {
   ChatFileEntry,
   type ChatFileEntryDiffInput,
-} from '@vibe/ui/components/ChatFileEntry';
-import { ChatApprovalCard } from '@vibe/ui/components/ChatApprovalCard';
-import { ChatUserMessage } from '@vibe/ui/components/ChatUserMessage';
-import { ChatAssistantMessage } from '@vibe/ui/components/ChatAssistantMessage';
-import { ChatSystemMessage } from '@vibe/ui/components/ChatSystemMessage';
-import { ChatThinkingMessage } from '@vibe/ui/components/ChatThinkingMessage';
-import { ChatErrorMessage } from '@vibe/ui/components/ChatErrorMessage';
-import { ChatScriptEntry } from '@vibe/ui/components/ChatScriptEntry';
-import { ChatSubagentEntry } from '@vibe/ui/components/ChatSubagentEntry';
-import { ChatAggregatedToolEntries } from '@vibe/ui/components/ChatAggregatedToolEntries';
-import { ChatAggregatedDiffEntries } from '@vibe/ui/components/ChatAggregatedDiffEntries';
-import { ChatCollapsedThinking } from '@vibe/ui/components/ChatCollapsedThinking';
-import { ChatMarkdown } from '@vibe/ui/components/ChatMarkdown';
+} from '@gencap/ui/components/ChatFileEntry';
+import { ChatApprovalCard } from '@gencap/ui/components/ChatApprovalCard';
+import { ChatUserMessage } from '@gencap/ui/components/ChatUserMessage';
+import { ChatAssistantMessage } from '@gencap/ui/components/ChatAssistantMessage';
+import { ChatSystemMessage } from '@gencap/ui/components/ChatSystemMessage';
+import { ChatThinkingMessage } from '@gencap/ui/components/ChatThinkingMessage';
+import { ChatErrorMessage } from '@gencap/ui/components/ChatErrorMessage';
+import { ChatScriptEntry } from '@gencap/ui/components/ChatScriptEntry';
+import { ChatSubagentEntry } from '@gencap/ui/components/ChatSubagentEntry';
+import { ChatAggregatedToolEntries } from '@gencap/ui/components/ChatAggregatedToolEntries';
+import { ChatAggregatedDiffEntries } from '@gencap/ui/components/ChatAggregatedDiffEntries';
+import { ChatCollapsedThinking } from '@gencap/ui/components/ChatCollapsedThinking';
+import { ChatMarkdown } from '@gencap/ui/components/ChatMarkdown';
 import {
   DiffViewBody,
   useDiffData,
-} from '@vibe/ui/components/PierreConversationDiff';
+} from '@gencap/ui/components/PierreConversationDiff';
 import { inIframe, openFileInVSCode } from '@/integrations/vscode/bridge';
 import { useDiffViewMode } from '@/shared/stores/useDiffViewStore';
 import type {

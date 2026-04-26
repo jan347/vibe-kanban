@@ -11,7 +11,7 @@ import {
   MOBILE_WIDTH,
   MOBILE_HEIGHT,
   PHONE_FRAME_PADDING,
-} from '@vibe/ui/components/PreviewBrowser';
+} from '@gencap/ui/components/PreviewBrowser';
 import { usePreviewDevServer } from '@/features/workspace/model/hooks/usePreviewDevServer';
 import { usePreviewUrl } from '@/shared/hooks/usePreviewUrl';
 import { useIsMobile } from '@/shared/hooks/useIsMobile';
@@ -286,11 +286,11 @@ export function PreviewBrowserContainer({
     // Loopback URLs need the preview proxy for origin isolation
     if (!previewProxyPort) return undefined;
 
-    // Don't proxy to Vibe Kanban's own ports (would create infinite loop)
+    // Don't proxy to GenCap Control Room's own ports (would create infinite loop)
     const vibeKanbanPort = window.location.port || '80';
     if (devServerPort === vibeKanbanPort) {
       console.warn(
-        `[Preview] Ignoring dev server URL with same port as Vibe Kanban (${devServerPort}). ` +
+        `[Preview] Ignoring dev server URL with same port as GenCap Control Room (${devServerPort}). ` +
           'This usually means the dev server failed to start or reported the wrong port.'
       );
       return undefined;
@@ -827,7 +827,7 @@ export function PreviewBrowserContainer({
 
     iframe.contentWindow.postMessage(
       {
-        source: 'vibe-kanban',
+        source: 'gencap',
         command: visible ? 'show-eruda' : 'hide-eruda',
       },
       '*'

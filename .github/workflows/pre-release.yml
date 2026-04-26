@@ -73,7 +73,7 @@ jobs:
         id: version
         run: |
           # Get the latest version from npm registry
-          latest_npm_version=$(npm view vibe-kanban version 2>/dev/null || echo "0.0.0")
+          latest_npm_version=$(npm view gencap version 2>/dev/null || echo "0.0.0")
           echo "Latest npm version: $latest_npm_version"
 
           # Get current repo version
@@ -343,7 +343,7 @@ jobs:
       - name: Build backend (Linux)
         if: runner.os == 'Linux' && !contains(matrix.target, 'windows')
         run: |
-          cargo zigbuild --release --target ${{ matrix.target }} -p server -p mcp -p review --bin server --bin vibe-kanban-mcp --bin review
+          cargo zigbuild --release --target ${{ matrix.target }} -p server -p mcp -p review --bin server --bin gencap-mcp --bin review
         env:
           POSTHOG_API_KEY: ${{ secrets.POSTHOG_API_KEY }}
           POSTHOG_API_ENDPOINT: ${{ secrets.POSTHOG_API_ENDPOINT }}
@@ -359,7 +359,7 @@ jobs:
           elif [[ "${{ matrix.target }}" == "aarch64-apple-darwin" ]]; then
             export MACOSX_DEPLOYMENT_TARGET=11.0
           fi
-          cargo build --release --target ${{ matrix.target }} -p server -p mcp -p review --bin server --bin vibe-kanban-mcp --bin review
+          cargo build --release --target ${{ matrix.target }} -p server -p mcp -p review --bin server --bin gencap-mcp --bin review
         env:
           POSTHOG_API_KEY: ${{ secrets.POSTHOG_API_KEY }}
           POSTHOG_API_ENDPOINT: ${{ secrets.POSTHOG_API_ENDPOINT }}
@@ -378,7 +378,7 @@ jobs:
             export DEFAULT_CC=clang-cl
             export CC_aarch64_pc_windows_msvc="${{ github.workspace }}/scripts/ring-cc-wrapper.sh"
           fi
-          cargo xwin build --cross-compiler clang-cl --release --target ${{ matrix.target }} -p server -p mcp -p review --bin server --bin vibe-kanban-mcp --bin review
+          cargo xwin build --cross-compiler clang-cl --release --target ${{ matrix.target }} -p server -p mcp -p review --bin server --bin gencap-mcp --bin review
         env:
           POSTHOG_API_KEY: ${{ secrets.POSTHOG_API_KEY }}
           POSTHOG_API_ENDPOINT: ${{ secrets.POSTHOG_API_ENDPOINT }}
@@ -406,13 +406,13 @@ jobs:
         run: |
           mkdir -p dist
           if [[ "${{ matrix.name }}" == *"windows"* ]]; then
-            cp target/${{ matrix.target }}/release/server.exe dist/vibe-kanban-${{ matrix.name }}.exe
-            cp target/${{ matrix.target }}/release/vibe-kanban-mcp.exe dist/vibe-kanban-mcp-${{ matrix.name }}.exe
-            cp target/${{ matrix.target }}/release/review.exe dist/vibe-kanban-review-${{ matrix.name }}.exe
+            cp target/${{ matrix.target }}/release/server.exe dist/gencap-${{ matrix.name }}.exe
+            cp target/${{ matrix.target }}/release/gencap-mcp.exe dist/gencap-mcp-${{ matrix.name }}.exe
+            cp target/${{ matrix.target }}/release/review.exe dist/gencap-review-${{ matrix.name }}.exe
           else
-            cp target/${{ matrix.target }}/release/server dist/vibe-kanban-${{ matrix.name }}
-            cp target/${{ matrix.target }}/release/vibe-kanban-mcp dist/vibe-kanban-mcp-${{ matrix.name }}
-            cp target/${{ matrix.target }}/release/review dist/vibe-kanban-review-${{ matrix.name }}
+            cp target/${{ matrix.target }}/release/server dist/gencap-${{ matrix.name }}
+            cp target/${{ matrix.target }}/release/gencap-mcp dist/gencap-mcp-${{ matrix.name }}
+            cp target/${{ matrix.target }}/release/review dist/gencap-review-${{ matrix.name }}
           fi
 
       # Code signing for macOS only
@@ -432,7 +432,7 @@ jobs:
         uses: BloopAI/apple-code-sign-action@v1
         with:
           input_path: target/${{ matrix.target }}/release/server
-          output_path: vibe-kanban
+          output_path: gencap
           p12_file: certificate.p12
           p12_password: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
           sign: true
@@ -440,14 +440,14 @@ jobs:
 
       - name: Package main binary (macOS)
         if: runner.os == 'macOS'
-        run: zip vibe-kanban.zip vibe-kanban
+        run: zip gencap.zip gencap
 
       - name: Sign MCP binary (macOS)
         if: runner.os == 'macOS'
         uses: BloopAI/apple-code-sign-action@v1
         with:
-          input_path: target/${{ matrix.target }}/release/vibe-kanban-mcp
-          output_path: vibe-kanban-mcp
+          input_path: target/${{ matrix.target }}/release/gencap-mcp
+          output_path: gencap-mcp
           p12_file: certificate.p12
           p12_password: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
           sign: true
@@ -455,14 +455,14 @@ jobs:
 
       - name: Package MCP binary (macOS)
         if: runner.os == 'macOS'
-        run: zip vibe-kanban-mcp.zip vibe-kanban-mcp
+        run: zip gencap-mcp.zip gencap-mcp
 
       - name: Sign Review binary (macOS)
         if: runner.os == 'macOS'
         uses: BloopAI/apple-code-sign-action@v1
         with:
           input_path: target/${{ matrix.target }}/release/review
-          output_path: vibe-kanban-review
+          output_path: gencap-review
           p12_file: certificate.p12
           p12_password: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
           sign: true
@@ -470,7 +470,7 @@ jobs:
 
       - name: Package Review binary (macOS)
         if: runner.os == 'macOS'
-        run: zip vibe-kanban-review.zip vibe-kanban-review
+        run: zip gencap-review.zip gencap-review
 
       - name: Notarize signed binaries (macOS)
         if: runner.os == 'macOS'
@@ -478,9 +478,9 @@ jobs:
         continue-on-error: true
         with:
           input_path: |
-            vibe-kanban.zip
-            vibe-kanban-mcp.zip
-            vibe-kanban-review.zip
+            gencap.zip
+            gencap-mcp.zip
+            gencap-review.zip
           sign: false
           notarize: true
           app_store_connect_api_key_json_file: app_store_key.json
@@ -489,9 +489,9 @@ jobs:
         if: runner.os == 'macOS'
         run: |
           mkdir -p dist
-          cp vibe-kanban.zip dist/vibe-kanban-${{ matrix.name }}.zip
-          cp vibe-kanban-mcp.zip dist/vibe-kanban-mcp-${{ matrix.name }}.zip
-          cp vibe-kanban-review.zip dist/vibe-kanban-review-${{ matrix.name }}.zip
+          cp gencap.zip dist/gencap-${{ matrix.name }}.zip
+          cp gencap-mcp.zip dist/gencap-mcp-${{ matrix.name }}.zip
+          cp gencap-review.zip dist/gencap-review-${{ matrix.name }}.zip
 
       - name: Clean up certificates (macOS)
         if: runner.os == 'macOS'
@@ -523,34 +523,34 @@ jobs:
         include:
           - target: x86_64-unknown-linux-musl
             name: linux-x64
-            binary: vibe-kanban
-            mcp_binary: vibe-kanban-mcp
-            review_binary: vibe-kanban-review
+            binary: gencap
+            mcp_binary: gencap-mcp
+            review_binary: gencap-review
           - target: x86_64-pc-windows-msvc
             name: windows-x64
-            binary: vibe-kanban.exe
-            mcp_binary: vibe-kanban-mcp.exe
-            review_binary: vibe-kanban-review.exe
+            binary: gencap.exe
+            mcp_binary: gencap-mcp.exe
+            review_binary: gencap-review.exe
           - target: x86_64-apple-darwin
             name: macos-x64
-            binary: vibe-kanban
-            mcp_binary: vibe-kanban-mcp
-            review_binary: vibe-kanban-review
+            binary: gencap
+            mcp_binary: gencap-mcp
+            review_binary: gencap-review
           - target: aarch64-apple-darwin
             name: macos-arm64
-            binary: vibe-kanban
-            mcp_binary: vibe-kanban-mcp
-            review_binary: vibe-kanban-review
+            binary: gencap
+            mcp_binary: gencap-mcp
+            review_binary: gencap-review
           - target: aarch64-pc-windows-msvc
             name: windows-arm64
-            binary: vibe-kanban.exe
-            mcp_binary: vibe-kanban-mcp.exe
-            review_binary: vibe-kanban-review.exe
+            binary: gencap.exe
+            mcp_binary: gencap-mcp.exe
+            review_binary: gencap-review.exe
           - target: aarch64-unknown-linux-musl
             name: linux-arm64
-            binary: vibe-kanban
-            mcp_binary: vibe-kanban-mcp
-            review_binary: vibe-kanban-review
+            binary: gencap
+            mcp_binary: gencap-mcp
+            review_binary: gencap-review
     steps:
       - uses: actions/checkout@v6
         with:
@@ -577,26 +577,26 @@ jobs:
         if: matrix.name != 'macos-arm64' && matrix.name != 'macos-x64'
         run: |
           mkdir -p npx-cli/dist/${{ matrix.name }}
-          mkdir vibe-kanban-${{ matrix.name }}
-          mkdir vibe-kanban-mcp-${{ matrix.name }}
-          mkdir vibe-kanban-review-${{ matrix.name }}
+          mkdir gencap-${{ matrix.name }}
+          mkdir gencap-mcp-${{ matrix.name }}
+          mkdir gencap-review-${{ matrix.name }}
 
-          cp dist/vibe-kanban-${{ matrix.name }}* vibe-kanban-${{ matrix.name }}/${{ matrix.binary }}
-          cp dist/vibe-kanban-mcp-${{ matrix.name }}* vibe-kanban-mcp-${{ matrix.name }}/${{ matrix.mcp_binary }}
-          cp dist/vibe-kanban-review-${{ matrix.name }}* vibe-kanban-review-${{ matrix.name }}/${{ matrix.review_binary }}
+          cp dist/gencap-${{ matrix.name }}* gencap-${{ matrix.name }}/${{ matrix.binary }}
+          cp dist/gencap-mcp-${{ matrix.name }}* gencap-mcp-${{ matrix.name }}/${{ matrix.mcp_binary }}
+          cp dist/gencap-review-${{ matrix.name }}* gencap-review-${{ matrix.name }}/${{ matrix.review_binary }}
 
-          zip -j npx-cli/dist/${{ matrix.name }}/vibe-kanban.zip vibe-kanban-${{ matrix.name }}/${{ matrix.binary }}
-          zip -j npx-cli/dist/${{ matrix.name }}/vibe-kanban-mcp.zip vibe-kanban-mcp-${{ matrix.name }}/${{ matrix.mcp_binary }}
-          zip -j npx-cli/dist/${{ matrix.name }}/vibe-kanban-review.zip vibe-kanban-review-${{ matrix.name }}/${{ matrix.review_binary }}
+          zip -j npx-cli/dist/${{ matrix.name }}/gencap.zip gencap-${{ matrix.name }}/${{ matrix.binary }}
+          zip -j npx-cli/dist/${{ matrix.name }}/gencap-mcp.zip gencap-mcp-${{ matrix.name }}/${{ matrix.mcp_binary }}
+          zip -j npx-cli/dist/${{ matrix.name }}/gencap-review.zip gencap-review-${{ matrix.name }}/${{ matrix.review_binary }}
 
       - name: Create platform package (macOS)
         if: matrix.name == 'macos-arm64' || matrix.name == 'macos-x64'
         run: |
           mkdir -p npx-cli/dist/${{ matrix.name }}
-          mkdir vibe-kanban-${{ matrix.name }}
-          cp dist/vibe-kanban-${{ matrix.name }}* npx-cli/dist/${{ matrix.name }}/vibe-kanban.zip
-          cp dist/vibe-kanban-mcp-${{ matrix.name }}* npx-cli/dist/${{ matrix.name }}/vibe-kanban-mcp.zip
-          cp dist/vibe-kanban-review-${{ matrix.name }}* npx-cli/dist/${{ matrix.name }}/vibe-kanban-review.zip
+          mkdir gencap-${{ matrix.name }}
+          cp dist/gencap-${{ matrix.name }}* npx-cli/dist/${{ matrix.name }}/gencap.zip
+          cp dist/gencap-mcp-${{ matrix.name }}* npx-cli/dist/${{ matrix.name }}/gencap-mcp.zip
+          cp dist/gencap-review-${{ matrix.name }}* npx-cli/dist/${{ matrix.name }}/gencap-review.zip
 
       - name: Upload platform package artifact
         uses: actions/upload-artifact@v6
@@ -643,7 +643,7 @@ jobs:
             const crypto = require('crypto');
             const manifest = { version: '$TAG', platforms: {} };
             const platforms = ['linux-x64', 'linux-arm64', 'windows-x64', 'windows-arm64', 'macos-x64', 'macos-arm64'];
-            const binaries = ['vibe-kanban', 'vibe-kanban-mcp', 'vibe-kanban-review'];
+            const binaries = ['gencap', 'gencap-mcp', 'gencap-review'];
 
             for (const platform of platforms) {
               manifest.platforms[platform] = {};
@@ -665,7 +665,7 @@ jobs:
 
           # Upload binaries (use full tag for path, allows multiple pre-releases to coexist)
           for platform in linux-x64 linux-arm64 windows-x64 windows-arm64 macos-x64 macos-arm64; do
-            for binary in vibe-kanban vibe-kanban-mcp vibe-kanban-review; do
+            for binary in gencap gencap-mcp gencap-review; do
               if [ -f "binaries/$platform/$binary.zip" ]; then
                 echo "Uploading binaries/$platform/$binary.zip..."
                 aws s3 cp "binaries/$platform/$binary.zip" \
@@ -1132,9 +1132,9 @@ jobs:
 
       - name: Zip frontend
         run: |
-          mkdir vibe-kanban-${{ needs.bump-version.outputs.new_tag }}
-          mv packages/local-web/dist vibe-kanban-${{ needs.bump-version.outputs.new_tag }}
-          zip -r vibe-kanban-${{ needs.bump-version.outputs.new_tag }}.zip vibe-kanban-${{ needs.bump-version.outputs.new_tag }}
+          mkdir gencap-${{ needs.bump-version.outputs.new_tag }}
+          mv packages/local-web/dist gencap-${{ needs.bump-version.outputs.new_tag }}
+          zip -r gencap-${{ needs.bump-version.outputs.new_tag }}.zip gencap-${{ needs.bump-version.outputs.new_tag }}
 
       - name: Setup Node for npm pack
         uses: ./.github/actions/setup-node
@@ -1161,6 +1161,6 @@ jobs:
           prerelease: true
           generate_release_notes: true
           files: |
-            vibe-kanban-${{ needs.bump-version.outputs.new_tag }}.zip
-            npx-cli/vibe-kanban-*.tgz
+            gencap-${{ needs.bump-version.outputs.new_tag }}.zip
+            npx-cli/gencap-*.tgz
             tauri-installers/*

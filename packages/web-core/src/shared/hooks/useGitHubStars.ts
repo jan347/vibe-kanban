@@ -2,10 +2,9 @@ import { useQuery } from '@tanstack/react-query';
 
 async function fetchGitHubStars(): Promise<number | null> {
   try {
-    const res = await fetch(
-      'https://api.github.com/repos/BloopAI/vibe-kanban',
-      { cache: 'no-store' }
-    );
+    const res = await fetch('https://api.github.com/repos/BloopAI/gencap', {
+      cache: 'no-store',
+    });
 
     if (!res.ok) {
       console.warn(`GitHub API error: ${res.status}`);

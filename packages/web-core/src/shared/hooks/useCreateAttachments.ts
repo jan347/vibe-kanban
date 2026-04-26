@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { attachmentsApi } from '@/shared/lib/api';
-import type { LocalAttachmentMetadata } from '@vibe/ui/components/WorkspaceContext';
+import type { LocalAttachmentMetadata } from '@gencap/ui/components/WorkspaceContext';
 import {
   buildWorkspaceAttachmentMarkdown,
   toLocalAttachmentMetadata,

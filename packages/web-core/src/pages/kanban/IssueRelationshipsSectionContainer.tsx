@@ -11,13 +11,13 @@ import { useProjectContext } from '@/shared/hooks/useProjectContext';
 import { useActions } from '@/shared/hooks/useActions';
 import { useAppNavigation } from '@/shared/hooks/useAppNavigation';
 import { resolveRelationshipsForIssue } from '@/shared/lib/resolveRelationships';
-import { IssueRelationshipsSection } from '@vibe/ui/components/IssueRelationshipsSection';
+import { IssueRelationshipsSection } from '@gencap/ui/components/IssueRelationshipsSection';
 import {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
-} from '@vibe/ui/components/Dropdown';
+} from '@gencap/ui/components/Dropdown';
 
 interface IssueRelationshipsSectionContainerProps {
   issueId: string;

@@ -5,12 +5,12 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@vibe/ui/components/KeyboardDialog';
-import { Button } from '@vibe/ui/components/Button';
-import { Input } from '@vibe/ui/components/Input';
-import { Alert, AlertDescription } from '@vibe/ui/components/Alert';
+} from '@gencap/ui/components/KeyboardDialog';
+import { Button } from '@gencap/ui/components/Button';
+import { Input } from '@gencap/ui/components/Input';
+import { Alert, AlertDescription } from '@gencap/ui/components/Alert';
 import { LogIn, Loader2 } from 'lucide-react';
-import { OAuthSignInButton } from '@vibe/ui/components/OAuthButtons';
+import { OAuthSignInButton } from '@gencap/ui/components/OAuthButtons';
 import { create, useModal } from '@ebay/nice-modal-react';
 import { useCallback, useState, useRef, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';

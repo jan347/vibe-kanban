@@ -2,7 +2,7 @@ import type { IssuePriority } from 'shared/remote-types';
 import type {
   IssueFormData,
   IssuePanelMode,
-} from '@vibe/ui/components/KanbanIssuePanel';
+} from '@gencap/ui/components/KanbanIssuePanel';
 
 interface EditTextState {
   title: string;

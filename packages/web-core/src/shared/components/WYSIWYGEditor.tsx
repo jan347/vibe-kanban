@@ -16,51 +16,51 @@ import { AutoFocusPlugin } from '@lexical/react/LexicalAutoFocusPlugin';
 import { ContentEditable } from '@lexical/react/LexicalContentEditable';
 import { TRANSFORMERS, type Transformer } from '@lexical/markdown';
 import { MarkdownShortcutPlugin } from '@lexical/react/LexicalMarkdownShortcutPlugin';
-import { CodeBlockEscapePlugin } from '@vibe/ui/components/CodeBlockEscapePlugin';
-import { InlineCodeBoundaryPlugin } from '@vibe/ui/components/InlineCodeBoundaryPlugin';
+import { CodeBlockEscapePlugin } from '@gencap/ui/components/CodeBlockEscapePlugin';
+import { InlineCodeBoundaryPlugin } from '@gencap/ui/components/InlineCodeBoundaryPlugin';
 import {
   PrCommentNode,
   PR_COMMENT_TRANSFORMER,
   PR_COMMENT_EXPORT_TRANSFORMER,
-} from '@vibe/ui/components/pr-comment-node';
-import { createImageNode } from '@vibe/ui/components/image-node';
-import { createAttachmentNode } from '@vibe/ui/components/attachment-node';
+} from '@gencap/ui/components/pr-comment-node';
+import { createImageNode } from '@gencap/ui/components/image-node';
+import { createAttachmentNode } from '@gencap/ui/components/attachment-node';
 import {
   ComponentInfoNode,
   COMPONENT_INFO_TRANSFORMER,
   COMPONENT_INFO_EXPORT_TRANSFORMER,
   $isComponentInfoNode,
-} from '@vibe/ui/components/component-info-node';
-import { TABLE_TRANSFORMER } from '@vibe/ui/lib/table-transformer';
+} from '@gencap/ui/components/component-info-node';
+import { TABLE_TRANSFORMER } from '@gencap/ui/lib/table-transformer';
 import {
   WorkspaceContext as EditorWorkspaceContext,
   SessionContext,
   LocalAttachmentsContext,
   type LocalAttachmentMetadata,
-} from '@vibe/ui/components/WorkspaceContext';
-import { TypeaheadOpenProvider } from '@vibe/ui/components/TypeaheadOpenContext';
+} from '@gencap/ui/components/WorkspaceContext';
+import { TypeaheadOpenProvider } from '@gencap/ui/components/TypeaheadOpenContext';
 import {
   FileTagTypeaheadPlugin,
   type RepoLike,
   type SearchResultItemLike,
-} from '@vibe/ui/components/FileTagTypeaheadPlugin';
-import { SlashCommandTypeaheadPlugin } from '@vibe/ui/components/SlashCommandTypeaheadPlugin';
-import { KeyboardCommandsPlugin } from '@vibe/ui/components/KeyboardCommandsPlugin';
-import { ImageKeyboardPlugin } from '@vibe/ui/components/ImageKeyboardPlugin';
-import { ComponentInfoKeyboardPlugin } from '@vibe/ui/components/ComponentInfoKeyboardPlugin';
-import { ReadOnlyLinkPlugin } from '@vibe/ui/components/ReadOnlyLinkPlugin';
-import { ClickableCodePlugin } from '@vibe/ui/components/ClickableCodePlugin';
-import { ToolbarPlugin } from '@vibe/ui/components/ToolbarPlugin';
-import { StaticToolbarPlugin } from '@vibe/ui/components/StaticToolbarPlugin';
-import { PasteMarkdownPlugin } from '@vibe/ui/components/PasteMarkdownPlugin';
-import { MarkdownSyncPlugin } from '@vibe/ui/components/MarkdownSyncPlugin';
+} from '@gencap/ui/components/FileTagTypeaheadPlugin';
+import { SlashCommandTypeaheadPlugin } from '@gencap/ui/components/SlashCommandTypeaheadPlugin';
+import { KeyboardCommandsPlugin } from '@gencap/ui/components/KeyboardCommandsPlugin';
+import { ImageKeyboardPlugin } from '@gencap/ui/components/ImageKeyboardPlugin';
+import { ComponentInfoKeyboardPlugin } from '@gencap/ui/components/ComponentInfoKeyboardPlugin';
+import { ReadOnlyLinkPlugin } from '@gencap/ui/components/ReadOnlyLinkPlugin';
+import { ClickableCodePlugin } from '@gencap/ui/components/ClickableCodePlugin';
+import { ToolbarPlugin } from '@gencap/ui/components/ToolbarPlugin';
+import { StaticToolbarPlugin } from '@gencap/ui/components/StaticToolbarPlugin';
+import { PasteMarkdownPlugin } from '@gencap/ui/components/PasteMarkdownPlugin';
+import { MarkdownSyncPlugin } from '@gencap/ui/components/MarkdownSyncPlugin';
 import { LexicalErrorBoundary } from '@lexical/react/LexicalErrorBoundary';
 import { HeadingNode, QuoteNode } from '@lexical/rich-text';
 import { ListNode, ListItemNode } from '@lexical/list';
 import { ListPlugin } from '@lexical/react/LexicalListPlugin';
 import { CodeNode, CodeHighlightNode } from '@lexical/code';
-import { CodeHighlightPlugin } from '@vibe/ui/components/CodeHighlightPlugin';
-import { CODE_HIGHLIGHT_CLASSES } from '@vibe/ui/lib/code-highlight-theme';
+import { CodeHighlightPlugin } from '@gencap/ui/components/CodeHighlightPlugin';
+import { CODE_HIGHLIGHT_CLASSES } from '@gencap/ui/lib/code-highlight-theme';
 import { LinkNode } from '@lexical/link';
 import { TableNode, TableRowNode, TableCellNode } from '@lexical/table';
 import { TablePlugin } from '@lexical/react/LexicalTablePlugin';
@@ -72,7 +72,7 @@ import { useUiPreferencesStore } from '@/shared/stores/useUiPreferencesStore';
 import { cn } from '@/shared/lib/utils';
 import { repoApi } from '@/shared/lib/api';
 import { searchTagsAndFiles } from '@/shared/lib/searchTagsAndFiles';
-import { Button } from '@vibe/ui/components/Button';
+import { Button } from '@gencap/ui/components/Button';
 import { Check, Clipboard, Pencil, Trash2 } from 'lucide-react';
 import type { RepoItem } from '@/shared/types/selectionItems';
 import { TagEditDialog } from '@/shared/dialogs/shared/TagEditDialog';

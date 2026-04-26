@@ -136,7 +136,7 @@ Each developer needs their own GitHub OAuth app so they can sign in from their p
 
 1. Go to https://github.com/settings/applications/new
 2. Fill in the form:
-   - **Application name**: anything (e.g. `vibe-kanban-mobile-yourname`)
+   - **Application name**: anything (e.g. `gencap-mobile-yourname`)
    - **Homepage URL**: run `echo "https://$TS_HOSTNAME:3001"` and paste the output
    - **Authorization callback URL**: run `echo "https://$TS_HOSTNAME:3001/v1/oauth/github/callback"` and paste the output
 3. Click **Register application**
@@ -226,7 +226,7 @@ pnpm remote:dev
 
 # Terminal 2 — Vite dev server (hot reload)
 VITE_RELAY_API_BASE_URL=https://$TS_HOSTNAME:8443 \
-pnpm --filter @vibe/remote-web dev
+pnpm --filter @gencap/remote-web dev
 
 # Terminal 3 — Caddy (dev config)
 caddy run --config Caddyfile.dev
@@ -276,7 +276,7 @@ pnpm remote:dev
 
 # Terminal 2 — Vite
 VITE_RELAY_API_BASE_URL=https://$TS_HOSTNAME:8443 \
-pnpm --filter @vibe/remote-web dev
+pnpm --filter @gencap/remote-web dev
 
 # Terminal 3 — Caddy
 caddy run --config Caddyfile.dev
@@ -309,4 +309,4 @@ echo "https://$TS_HOSTNAME:3001"
 | `ping $TS_HOSTNAME` doesn't resolve | Enable MagicDNS in Tailscale admin: https://login.tailscale.com/admin/dns |
 | Dev mode: Vite page loads but API calls fail | Make sure Docker is running (`pnpm remote:dev`) and you're using `Caddyfile.dev` (not `Caddyfile`) |
 | Dev mode: hot reload doesn't work on phone | Vite HMR uses WebSocket — verify Caddy is proxying to `localhost:3002` (not `127.0.0.1:3002`). Regenerate `Caddyfile.dev` if needed |
-| Dev mode: blank page or 502 on phone | Vite dev server may not be running. Check Terminal 2 is up with `pnpm --filter @vibe/remote-web dev` |
+| Dev mode: blank page or 502 on phone | Vite dev server may not be running. Check Terminal 2 is up with `pnpm --filter @gencap/remote-web dev` |

@@ -30,7 +30,7 @@ import {
   type IssueCommentsEditorProps,
   type IssueCommentData,
   type ReactionGroup,
-} from '@vibe/ui/components/IssueCommentsSection';
+} from '@gencap/ui/components/IssueCommentsSection';
 import WYSIWYGEditor, {
   type WYSIWYGEditorRef,
 } from '@/shared/components/WYSIWYGEditor';
