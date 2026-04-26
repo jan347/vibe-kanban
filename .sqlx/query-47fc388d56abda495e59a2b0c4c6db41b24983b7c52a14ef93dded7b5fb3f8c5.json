@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT EXISTS(SELECT 1 FROM work_items WHERE id = ?1) AS \"v!: i64\"",
+  "describe": {
+    "columns": [
+      {
+        "name": "v!: i64",
+        "ordinal": 0,
+        "type_info": "Integer"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "47fc388d56abda495e59a2b0c4c6db41b24983b7c52a14ef93dded7b5fb3f8c5"
+}

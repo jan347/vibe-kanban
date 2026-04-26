@@ -6,8 +6,9 @@ use axum::{
     routing::{get, post},
 };
 use db::models::mail::{
-    AwaitingReplyItem, MailError, MailMessageWithRecipients, MailOkResponse, MailThreadSummary,
-    MailThreadWithMessages, ReplyMailRequest, SendMailRequest, SendMailResponse, UnreadMailItem,
+    AwaitingReplyItem, BroadcastMailRequest, BroadcastMailResponse, MailError,
+    MailMessageWithRecipients, MailOkResponse, MailThreadSummary, MailThreadWithMessages,
+    ReplyMailRequest, SendMailRequest, SendMailResponse, UnreadMailItem, broadcast_mail,
     get_message_with_recipients, get_thread_with_messages, list_threads_for_workspace,
     list_workspace_awaiting_reply, list_workspace_unread, reply_to_message, send_mail,
 };
@@ -38,6 +39,16 @@ async fn send(
     ResponseJson(payload): ResponseJson<SendMailRequest>,
 ) -> MailRouteResult<SendMailResponse> {
     send_mail(&deployment.db().pool, payload)
+        .await
+        .map(|response| ResponseJson(ApiResponse::success(response)))
+        .map_err(mail_error_response)
+}
+
+async fn broadcast(
+    State(deployment): State<DeploymentImpl>,
+    ResponseJson(payload): ResponseJson<BroadcastMailRequest>,
+) -> MailRouteResult<BroadcastMailResponse> {
+    broadcast_mail(&deployment.db().pool, payload)
         .await
         .map(|response| ResponseJson(ApiResponse::success(response)))
         .map_err(mail_error_response)
@@ -144,6 +155,7 @@ fn mail_error_response(error: MailError) -> (StatusCode, ResponseJson<serde_json
 pub fn router(_deployment: &DeploymentImpl) -> Router<DeploymentImpl> {
     Router::new()
         .route("/mail/send", post(send))
+        .route("/mail/broadcast", post(broadcast))
         .route("/mail/threads", get(list_threads))
         .route("/mail/threads/{thread_id}", get(get_thread))
         .route("/mail/messages/{message_id}", get(get_message))

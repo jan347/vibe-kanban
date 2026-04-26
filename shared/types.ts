@@ -186,6 +186,12 @@ export type MailRecipient = { id: string, message_id: string, recipient_kind: Ma
 
 export type MailRecipientKind = "workspace" | "human";
 
+export type MailSender = { kind: MailSenderKind, workspace_id: string | null, execution_process_id: string | null, };
+
+export type BroadcastMailRequest = { thread_id: string | null, work_item_id: string, body: string, requires_response: boolean, response_kind: MailResponseKind | null, response_options_json: string | null, sender: MailSender, idempotency_key: string | null, expires_in_seconds: bigint | null, };
+
+export type BroadcastMailResponse = { message_id: string, thread_id: string, recipient_count: bigint, };
+
 export type ModelPreset = { id: string, name: string, description: string | null, role: ModelPresetRole, executor: ModelPresetExecutor, model_id: string, permission_mode: string | null, reasoning_effort: string | null, env_vars_json: string | null, labels_json: string | null, created_at: string, updated_at: string, };
 
 export type ModelPresetRole = "planner" | "implementer" | "reviewer" | "qa" | "diagrammer" | "summarizer" | "other";

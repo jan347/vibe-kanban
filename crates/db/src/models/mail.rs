@@ -90,7 +90,7 @@ pub enum MailError {
     InvalidRequest(String),
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct MailSender {
     pub kind: MailSenderKind,
     pub workspace_id: Option<Uuid>,
@@ -122,6 +122,30 @@ pub struct SendMailRequest {
 pub struct SendMailResponse {
     pub message_id: Uuid,
     pub thread_id: Uuid,
+}
+
+/// Phase 4b: broadcast a single message to every active workspace linked to
+/// a work item. The server fans out into N `mail_recipients` rows (one per
+/// active workspace with a running coding-agent process); the caller never
+/// enumerates recipients.
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+pub struct BroadcastMailRequest {
+    pub thread_id: Option<Uuid>,
+    pub work_item_id: Uuid,
+    pub body: String,
+    pub requires_response: bool,
+    pub response_kind: Option<MailResponseKind>,
+    pub response_options_json: Option<String>,
+    pub sender: MailSender,
+    pub idempotency_key: Option<String>,
+    pub expires_in_seconds: Option<u64>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+pub struct BroadcastMailResponse {
+    pub message_id: Uuid,
+    pub thread_id: Uuid,
+    pub recipient_count: i64,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -492,6 +516,187 @@ pub async fn send_mail(
     })
 }
 
+/// Phase 4b: broadcast a single message to every active workspace linked to
+/// a work_item via work_item_runs. "Active" = the workspace has at least one
+/// running coding-agent process across its sessions.
+pub async fn broadcast_mail(
+    pool: &SqlitePool,
+    request: BroadcastMailRequest,
+) -> Result<BroadcastMailResponse, MailError> {
+    if request.body.trim().is_empty() {
+        return Err(MailError::InvalidRequest("body must not be empty".into()));
+    }
+    if let Some(response_options_json) = request.response_options_json.as_deref() {
+        serde_json::from_str::<serde_json::Value>(response_options_json).map_err(|error| {
+            MailError::InvalidRequest(format!(
+                "response_options_json must be valid JSON: {error}"
+            ))
+        })?;
+    }
+    validate_sender(pool, &request.sender).await?;
+
+    // Validate work_item exists; per design doc fix #8 also require ≥1 active recipient.
+    let work_item_exists: i64 = sqlx::query_scalar!(
+        r#"SELECT EXISTS(SELECT 1 FROM work_items WHERE id = ?1) AS "v!: i64""#,
+        request.work_item_id
+    )
+    .fetch_one(pool)
+    .await?;
+    if work_item_exists == 0 {
+        return Err(MailError::NotFound);
+    }
+
+    // If thread_id provided, verify it's a broadcast thread.
+    if let Some(thread_id) = request.thread_id {
+        let thread = MailThread::find_by_id(pool, thread_id)
+            .await?
+            .ok_or(MailError::NotFound)?;
+        if thread.kind != MailThreadKind::Broadcast {
+            return Err(MailError::InvalidRequest(
+                "broadcast endpoint requires a broadcast thread".into(),
+            ));
+        }
+    }
+
+    // Idempotency pre-check (race-recovered post-INSERT below).
+    if let Some(idempotency_key) = request.idempotency_key.as_deref()
+        && let Some(existing) = find_message_by_idempotency_key(pool, idempotency_key).await?
+    {
+        // Existing message for this idempotency_key: count recipients and return.
+        let count: i64 = sqlx::query_scalar!(
+            r#"SELECT COUNT(*) AS "n!: i64" FROM mail_recipients WHERE message_id = ?1"#,
+            existing.message_id
+        )
+        .fetch_one(pool)
+        .await?;
+        return Ok(BroadcastMailResponse {
+            message_id: existing.message_id,
+            thread_id: existing.thread_id,
+            recipient_count: count,
+        });
+    }
+
+    let expires_at = expires_at(request.expires_in_seconds)?;
+    let thread_id = request.thread_id.unwrap_or_else(Uuid::new_v4);
+    let message_id = Uuid::new_v4();
+    let subject = synthesize_subject(&request.body);
+    let is_new_thread = request.thread_id.is_none();
+    let work_item_id = request.work_item_id;
+    let thread_kind = MailThreadKind::Broadcast;
+    let sender_kind = request.sender.kind;
+    let sender_workspace_id = request.sender.workspace_id;
+    let sender_execution_process_id = request.sender.execution_process_id;
+    let body = request.body;
+    let requires_response = request.requires_response;
+    let response_kind = request.response_kind;
+    let response_options_json = request.response_options_json;
+    let idempotency_key = request.idempotency_key;
+
+    let mut tx = pool.begin().await?;
+
+    if is_new_thread {
+        sqlx::query!(
+            r#"INSERT INTO mail_threads (id, work_item_id, subject, kind)
+               VALUES (?1, ?2, ?3, ?4)"#,
+            thread_id,
+            work_item_id,
+            subject,
+            thread_kind
+        )
+        .execute(&mut *tx)
+        .await?;
+    }
+
+    let message_insert = sqlx::query!(
+        r#"INSERT INTO mail_messages (
+               id, thread_id, sender_kind, sender_workspace_id,
+               sender_execution_process_id, body, requires_response,
+               response_kind, response_options_json, expires_at, idempotency_key
+           )
+           VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11)"#,
+        message_id,
+        thread_id,
+        sender_kind,
+        sender_workspace_id,
+        sender_execution_process_id,
+        body,
+        requires_response,
+        response_kind,
+        response_options_json,
+        expires_at,
+        idempotency_key
+    )
+    .execute(&mut *tx)
+    .await;
+
+    if let Err(err) = message_insert {
+        if let (Some(db_err), Some(key)) =
+            (err.as_database_error(), idempotency_key.as_deref())
+            && db_err.is_unique_violation()
+        {
+            tx.rollback().await?;
+            if let Some(existing) = find_message_by_idempotency_key(pool, key).await? {
+                let count: i64 = sqlx::query_scalar!(
+                    r#"SELECT COUNT(*) AS "n!: i64" FROM mail_recipients WHERE message_id = ?1"#,
+                    existing.message_id
+                )
+                .fetch_one(pool)
+                .await?;
+                return Ok(BroadcastMailResponse {
+                    message_id: existing.message_id,
+                    thread_id: existing.thread_id,
+                    recipient_count: count,
+                });
+            }
+        }
+        return Err(err.into());
+    }
+
+    // Fan out: one mail_recipients row per active workspace on the work_item.
+    // Active = workspace has at least one running coding-agent execution_process
+    // (joining workspace -> sessions -> execution_processes).
+    let recipient_kind = MailRecipientKind::Workspace;
+    let inserted = sqlx::query!(
+        r#"
+        INSERT OR IGNORE INTO mail_recipients (
+            id, message_id, recipient_kind, recipient_workspace_id
+        )
+        SELECT randomblob(16), ?1, ?2, wir.workspace_id
+        FROM work_item_runs wir
+        WHERE wir.work_item_id = ?3
+          AND EXISTS (
+              SELECT 1 FROM sessions s
+              JOIN execution_processes ep ON ep.session_id = s.id
+              WHERE s.workspace_id = wir.workspace_id
+                AND ep.status = 'running'
+                AND ep.run_reason = 'codingagent'
+          )
+        "#,
+        message_id,
+        recipient_kind,
+        work_item_id
+    )
+    .execute(&mut *tx)
+    .await?;
+
+    let recipient_count = inserted.rows_affected() as i64;
+    if recipient_count == 0 {
+        // No active recipients: roll back so we don't leave an orphan message.
+        tx.rollback().await?;
+        return Err(MailError::InvalidRequest(
+            "no active workspaces on this work item — broadcast aborted".into(),
+        ));
+    }
+
+    tx.commit().await?;
+
+    Ok(BroadcastMailResponse {
+        message_id,
+        thread_id,
+        recipient_count,
+    })
+}
+
 pub async fn list_threads_for_workspace(
     pool: &SqlitePool,
     workspace_id: Uuid,
@@ -753,9 +958,16 @@ async fn validate_send_request(
     pool: &SqlitePool,
     request: &SendMailRequest,
 ) -> Result<(), MailError> {
-    if request.kind != MailThreadKind::AgentHuman {
+    // Phase 4b loosens the kind gate from agent_human-only to also allow
+    // agent_agent (an agent in one workspace messaging an agent in another).
+    // Broadcast still flows via a separate broadcast endpoint with fan-out
+    // semantics, NOT through the unicast send path.
+    if !matches!(
+        request.kind,
+        MailThreadKind::AgentHuman | MailThreadKind::AgentAgent
+    ) {
         return Err(MailError::InvalidRequest(
-            "Phase 4a only supports kind agent_human".into(),
+            "send unicast: kind must be agent_human or agent_agent (use the broadcast endpoint for broadcast)".into(),
         ));
     }
 
@@ -776,9 +988,17 @@ async fn validate_send_request(
         let thread = MailThread::find_by_id(pool, thread_id)
             .await?
             .ok_or(MailError::NotFound)?;
-        if thread.kind != MailThreadKind::AgentHuman {
+        if thread.kind != request.kind {
+            return Err(MailError::InvalidRequest(format!(
+                "thread kind mismatch: thread is {:?} but request is {:?}",
+                thread.kind, request.kind
+            )));
+        }
+        // Broadcast threads are only appended to via the broadcast endpoint,
+        // not the unicast send path.
+        if matches!(thread.kind, MailThreadKind::Broadcast) {
             return Err(MailError::InvalidRequest(
-                "Phase 4a only supports appending to agent_human threads".into(),
+                "broadcast threads must be appended via the broadcast endpoint".into(),
             ));
         }
     }

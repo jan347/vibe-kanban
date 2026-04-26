@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO mail_messages (\n               id, thread_id, sender_kind, sender_workspace_id,\n               sender_execution_process_id, body, requires_response,\n               response_kind, response_options_json, expires_at, idempotency_key\n           )\n           VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 11
+    },
+    "nullable": []
+  },
+  "hash": "963e0bffcef88b26cd7446f06d53799d3eb335e649d41455f41e01030e24f630"
+}
