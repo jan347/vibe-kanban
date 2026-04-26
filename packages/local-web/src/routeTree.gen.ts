@@ -15,12 +15,14 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as OnboardingSignInRouteImport } from './routes/onboarding_.sign-in'
 import { Route as AppWorkspacesRouteImport } from './routes/_app.workspaces'
 import { Route as AppNotificationsRouteImport } from './routes/_app.notifications'
+import { Route as AppMailRouteImport } from './routes/_app.mail'
 import { Route as AppExportRouteImport } from './routes/_app.export'
 import { Route as WorkspacesWorkspaceIdVscodeRouteImport } from './routes/workspaces.$workspaceId.vscode'
 import { Route as AppWorkspacesElectricTestRouteImport } from './routes/_app.workspaces_.electric-test'
 import { Route as AppWorkspacesCreateRouteImport } from './routes/_app.workspaces_.create'
 import { Route as AppWorkspacesWorkspaceIdRouteImport } from './routes/_app.workspaces_.$workspaceId'
 import { Route as AppProjectsProjectIdRouteImport } from './routes/_app.projects.$projectId'
+import { Route as AppMailThreadsThreadIdRouteImport } from './routes/_app.mail.threads.$threadId'
 import { Route as AppHostsHostIdWorkspacesRouteImport } from './routes/_app.hosts.$hostId.workspaces'
 import { Route as HostsHostIdWorkspacesWorkspaceIdVscodeRouteImport } from './routes/hosts.$hostId.workspaces.$workspaceId.vscode'
 import { Route as AppProjectsProjectIdIssuesIssueIdRouteImport } from './routes/_app.projects.$projectId_.issues.$issueId'
@@ -62,6 +64,11 @@ const AppNotificationsRoute = AppNotificationsRouteImport.update({
   path: '/notifications',
   getParentRoute: () => AppRoute,
 } as any)
+const AppMailRoute = AppMailRouteImport.update({
+  id: '/mail',
+  path: '/mail',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppExportRoute = AppExportRouteImport.update({
   id: '/export',
   path: '/export',
@@ -94,6 +101,11 @@ const AppProjectsProjectIdRoute = AppProjectsProjectIdRouteImport.update({
   id: '/projects/$projectId',
   path: '/projects/$projectId',
   getParentRoute: () => AppRoute,
+} as any)
+const AppMailThreadsThreadIdRoute = AppMailThreadsThreadIdRouteImport.update({
+  id: '/threads/$threadId',
+  path: '/threads/$threadId',
+  getParentRoute: () => AppMailRoute,
 } as any)
 const AppHostsHostIdWorkspacesRoute =
   AppHostsHostIdWorkspacesRouteImport.update({
@@ -170,6 +182,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/onboarding': typeof OnboardingRoute
   '/export': typeof AppExportRoute
+  '/mail': typeof AppMailRouteWithChildren
   '/notifications': typeof AppNotificationsRoute
   '/workspaces': typeof AppWorkspacesRoute
   '/onboarding/sign-in': typeof OnboardingSignInRoute
@@ -179,6 +192,7 @@ export interface FileRoutesByFullPath {
   '/workspaces/electric-test': typeof AppWorkspacesElectricTestRoute
   '/workspaces/$workspaceId/vscode': typeof WorkspacesWorkspaceIdVscodeRoute
   '/hosts/$hostId/workspaces': typeof AppHostsHostIdWorkspacesRoute
+  '/mail/threads/$threadId': typeof AppMailThreadsThreadIdRoute
   '/hosts/$hostId/workspaces/$workspaceId': typeof AppHostsHostIdWorkspacesWorkspaceIdRoute
   '/hosts/$hostId/workspaces/create': typeof AppHostsHostIdWorkspacesCreateRoute
   '/projects/$projectId/issues/$issueId': typeof AppProjectsProjectIdIssuesIssueIdRoute
@@ -194,6 +208,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/onboarding': typeof OnboardingRoute
   '/export': typeof AppExportRoute
+  '/mail': typeof AppMailRouteWithChildren
   '/notifications': typeof AppNotificationsRoute
   '/workspaces': typeof AppWorkspacesRoute
   '/onboarding/sign-in': typeof OnboardingSignInRoute
@@ -203,6 +218,7 @@ export interface FileRoutesByTo {
   '/workspaces/electric-test': typeof AppWorkspacesElectricTestRoute
   '/workspaces/$workspaceId/vscode': typeof WorkspacesWorkspaceIdVscodeRoute
   '/hosts/$hostId/workspaces': typeof AppHostsHostIdWorkspacesRoute
+  '/mail/threads/$threadId': typeof AppMailThreadsThreadIdRoute
   '/hosts/$hostId/workspaces/$workspaceId': typeof AppHostsHostIdWorkspacesWorkspaceIdRoute
   '/hosts/$hostId/workspaces/create': typeof AppHostsHostIdWorkspacesCreateRoute
   '/projects/$projectId/issues/$issueId': typeof AppProjectsProjectIdIssuesIssueIdRoute
@@ -220,6 +236,7 @@ export interface FileRoutesById {
   '/_app': typeof AppRouteWithChildren
   '/onboarding': typeof OnboardingRoute
   '/_app/export': typeof AppExportRoute
+  '/_app/mail': typeof AppMailRouteWithChildren
   '/_app/notifications': typeof AppNotificationsRoute
   '/_app/workspaces': typeof AppWorkspacesRoute
   '/onboarding_/sign-in': typeof OnboardingSignInRoute
@@ -229,6 +246,7 @@ export interface FileRoutesById {
   '/_app/workspaces_/electric-test': typeof AppWorkspacesElectricTestRoute
   '/workspaces/$workspaceId/vscode': typeof WorkspacesWorkspaceIdVscodeRoute
   '/_app/hosts/$hostId/workspaces': typeof AppHostsHostIdWorkspacesRoute
+  '/_app/mail/threads/$threadId': typeof AppMailThreadsThreadIdRoute
   '/_app/hosts/$hostId/workspaces_/$workspaceId': typeof AppHostsHostIdWorkspacesWorkspaceIdRoute
   '/_app/hosts/$hostId/workspaces_/create': typeof AppHostsHostIdWorkspacesCreateRoute
   '/_app/projects/$projectId_/issues/$issueId': typeof AppProjectsProjectIdIssuesIssueIdRoute
@@ -246,6 +264,7 @@ export interface FileRouteTypes {
     | '/'
     | '/onboarding'
     | '/export'
+    | '/mail'
     | '/notifications'
     | '/workspaces'
     | '/onboarding/sign-in'
@@ -255,6 +274,7 @@ export interface FileRouteTypes {
     | '/workspaces/electric-test'
     | '/workspaces/$workspaceId/vscode'
     | '/hosts/$hostId/workspaces'
+    | '/mail/threads/$threadId'
     | '/hosts/$hostId/workspaces/$workspaceId'
     | '/hosts/$hostId/workspaces/create'
     | '/projects/$projectId/issues/$issueId'
@@ -270,6 +290,7 @@ export interface FileRouteTypes {
     | '/'
     | '/onboarding'
     | '/export'
+    | '/mail'
     | '/notifications'
     | '/workspaces'
     | '/onboarding/sign-in'
@@ -279,6 +300,7 @@ export interface FileRouteTypes {
     | '/workspaces/electric-test'
     | '/workspaces/$workspaceId/vscode'
     | '/hosts/$hostId/workspaces'
+    | '/mail/threads/$threadId'
     | '/hosts/$hostId/workspaces/$workspaceId'
     | '/hosts/$hostId/workspaces/create'
     | '/projects/$projectId/issues/$issueId'
@@ -295,6 +317,7 @@ export interface FileRouteTypes {
     | '/_app'
     | '/onboarding'
     | '/_app/export'
+    | '/_app/mail'
     | '/_app/notifications'
     | '/_app/workspaces'
     | '/onboarding_/sign-in'
@@ -304,6 +327,7 @@ export interface FileRouteTypes {
     | '/_app/workspaces_/electric-test'
     | '/workspaces/$workspaceId/vscode'
     | '/_app/hosts/$hostId/workspaces'
+    | '/_app/mail/threads/$threadId'
     | '/_app/hosts/$hostId/workspaces_/$workspaceId'
     | '/_app/hosts/$hostId/workspaces_/create'
     | '/_app/projects/$projectId_/issues/$issueId'
@@ -369,6 +393,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppNotificationsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/mail': {
+      id: '/_app/mail'
+      path: '/mail'
+      fullPath: '/mail'
+      preLoaderRoute: typeof AppMailRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/export': {
       id: '/_app/export'
       path: '/export'
@@ -410,6 +441,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/projects/$projectId'
       preLoaderRoute: typeof AppProjectsProjectIdRouteImport
       parentRoute: typeof AppRoute
+    }
+    '/_app/mail/threads/$threadId': {
+      id: '/_app/mail/threads/$threadId'
+      path: '/threads/$threadId'
+      fullPath: '/mail/threads/$threadId'
+      preLoaderRoute: typeof AppMailThreadsThreadIdRouteImport
+      parentRoute: typeof AppMailRoute
     }
     '/_app/hosts/$hostId/workspaces': {
       id: '/_app/hosts/$hostId/workspaces'
@@ -491,8 +529,20 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AppMailRouteChildren {
+  AppMailThreadsThreadIdRoute: typeof AppMailThreadsThreadIdRoute
+}
+
+const AppMailRouteChildren: AppMailRouteChildren = {
+  AppMailThreadsThreadIdRoute: AppMailThreadsThreadIdRoute,
+}
+
+const AppMailRouteWithChildren =
+  AppMailRoute._addFileChildren(AppMailRouteChildren)
+
 interface AppRouteChildren {
   AppExportRoute: typeof AppExportRoute
+  AppMailRoute: typeof AppMailRouteWithChildren
   AppNotificationsRoute: typeof AppNotificationsRoute
   AppWorkspacesRoute: typeof AppWorkspacesRoute
   AppProjectsProjectIdRoute: typeof AppProjectsProjectIdRoute
@@ -513,6 +563,7 @@ interface AppRouteChildren {
 
 const AppRouteChildren: AppRouteChildren = {
   AppExportRoute: AppExportRoute,
+  AppMailRoute: AppMailRouteWithChildren,
   AppNotificationsRoute: AppNotificationsRoute,
   AppWorkspacesRoute: AppWorkspacesRoute,
   AppProjectsProjectIdRoute: AppProjectsProjectIdRoute,

@@ -1,10 +1,12 @@
 import { useMemo } from 'react';
-import { SpinnerIcon, PlusIcon } from '@phosphor-icons/react';
+import { useNavigate } from '@tanstack/react-router';
+import { SpinnerIcon, PlusIcon, EnvelopeIcon } from '@phosphor-icons/react';
 import { useAppNavigation } from '@/shared/hooks/useAppNavigation';
 import {
   useWorkspaces,
   type SidebarWorkspace,
 } from '@/shared/hooks/useWorkspaces';
+import { useUnreadMail } from '@/shared/hooks/useMail';
 
 type DashboardGroup =
   | 'needsMe'
@@ -89,7 +91,10 @@ function WorkspaceRow({
 
 export function WorkspacesLanding() {
   const appNavigation = useAppNavigation();
+  const navigate = useNavigate();
   const { workspaces, isLoading } = useWorkspaces();
+  const { data: unreadMail } = useUnreadMail();
+  const unreadMailCount = unreadMail?.length ?? 0;
 
   const grouped = useMemo(() => {
     const buckets: Record<DashboardGroup, SidebarWorkspace[]> = {
@@ -136,13 +141,27 @@ export function WorkspacesLanding() {
     <div className="flex h-full flex-1 flex-col gap-6 overflow-y-auto bg-primary p-6">
       <header className="flex items-center justify-between">
         <h1 className="text-lg text-high">Workspaces</h1>
-        <button
-          className="flex items-center gap-1 rounded-sm bg-brand px-3 py-1 text-base text-high hover:bg-brand-hover"
-          onClick={() => appNavigation.goToWorkspacesCreate({})}
-        >
-          <PlusIcon className="size-4" />
-          New workspace
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            className="flex items-center gap-1 rounded-sm border border-secondary bg-panel px-3 py-1 text-base text-high hover:bg-secondary"
+            onClick={() => navigate({ to: '/mail' as never })}
+          >
+            <EnvelopeIcon className="size-4" />
+            Inbox
+            {unreadMailCount > 0 && (
+              <span className="rounded-full bg-error px-2 text-base text-high">
+                {unreadMailCount}
+              </span>
+            )}
+          </button>
+          <button
+            className="flex items-center gap-1 rounded-sm bg-brand px-3 py-1 text-base text-high hover:bg-brand-hover"
+            onClick={() => appNavigation.goToWorkspacesCreate({})}
+          >
+            <PlusIcon className="size-4" />
+            New workspace
+          </button>
+        </div>
       </header>
       {GROUP_ORDER.map((group) => {
         const items = grouped[group];
