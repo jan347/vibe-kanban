@@ -18,7 +18,10 @@ pub enum ModelPresetRole {
 }
 
 #[derive(Debug, Clone, Type, Serialize, Deserialize, PartialEq, TS)]
-#[sqlx(type_name = "model_preset_executor", rename_all = "SCREAMING_SNAKE_CASE")]
+#[sqlx(
+    type_name = "model_preset_executor",
+    rename_all = "SCREAMING_SNAKE_CASE"
+)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum ModelPresetExecutor {
     ClaudeCode,

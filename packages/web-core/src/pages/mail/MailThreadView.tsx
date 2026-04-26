@@ -88,7 +88,11 @@ function ReplyForm({
         return;
       }
       value = { decision: selectedKey };
-    } else if (responseKind === 'free_text' || responseKind === null || responseKind === 'none') {
+    } else if (
+      responseKind === 'free_text' ||
+      responseKind === null ||
+      responseKind === 'none'
+    ) {
       if (!text.trim()) {
         setError('Reply cannot be empty.');
         return;

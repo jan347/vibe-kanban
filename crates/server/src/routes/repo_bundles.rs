@@ -7,9 +7,7 @@ use axum::{
     response::Json as ResponseJson,
     routing::get,
 };
-use db::models::repo_bundle::{
-    CreateRepoBundle, RepoBundle, UpdateRepoBundle,
-};
+use db::models::repo_bundle::{CreateRepoBundle, RepoBundle, UpdateRepoBundle};
 use deployment::Deployment;
 use utils::response::ApiResponse;
 use uuid::Uuid;
@@ -100,7 +98,9 @@ pub async fn update_bundle(
     ResponseJson(payload): ResponseJson<UpdateRepoBundle>,
 ) -> Result<ResponseJson<ApiResponse<RepoBundle>>, ApiError> {
     let pool = &deployment.db().pool;
-    let now_str = chrono::Utc::now().format("%Y-%m-%dT%H:%M:%S%.3fZ").to_string();
+    let now_str = chrono::Utc::now()
+        .format("%Y-%m-%dT%H:%M:%S%.3fZ")
+        .to_string();
     let repo_ids_json = match &payload.repo_ids {
         Some(ids) => Some(serialize_repo_ids(ids)?),
         None => None,
@@ -142,10 +142,7 @@ pub async fn delete_bundle(
     Ok(StatusCode::NO_CONTENT)
 }
 
-async fn fetch_bundle(
-    pool: &sqlx::SqlitePool,
-    id: Uuid,
-) -> Result<RepoBundle, ApiError> {
+async fn fetch_bundle(pool: &sqlx::SqlitePool, id: Uuid) -> Result<RepoBundle, ApiError> {
     sqlx::query_as!(
         RepoBundle,
         r#"

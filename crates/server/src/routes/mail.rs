@@ -9,9 +9,9 @@ use db::models::mail::{
     AwaitingReplyItem, BroadcastMailRequest, BroadcastMailResponse, CreateMailAttachment,
     MailAttachment, MailError, MailMessageWithRecipients, MailOkResponse, MailThreadSummary,
     MailThreadWithMessages, ReplyMailRequest, SendMailRequest, SendMailResponse, UnreadMailItem,
-    attach_blob_to_message, broadcast_mail, get_message_with_recipients,
-    get_thread_with_messages, list_attachments_for_message, list_threads_for_workspace,
-    list_workspace_awaiting_reply, list_workspace_unread, reply_to_message, send_mail,
+    attach_blob_to_message, broadcast_mail, get_message_with_recipients, get_thread_with_messages,
+    list_attachments_for_message, list_threads_for_workspace, list_workspace_awaiting_reply,
+    list_workspace_unread, reply_to_message, send_mail,
 };
 use deployment::Deployment;
 use serde::Deserialize;

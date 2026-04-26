@@ -85,7 +85,9 @@ pub async fn update_template(
     ResponseJson(payload): ResponseJson<UpdatePromptTemplate>,
 ) -> Result<ResponseJson<ApiResponse<PromptTemplate>>, ApiError> {
     let pool = &deployment.db().pool;
-    let now_str = chrono::Utc::now().format("%Y-%m-%dT%H:%M:%S%.3fZ").to_string();
+    let now_str = chrono::Utc::now()
+        .format("%Y-%m-%dT%H:%M:%S%.3fZ")
+        .to_string();
     sqlx::query!(
         r#"
         UPDATE prompt_templates SET
@@ -126,10 +128,7 @@ pub async fn delete_template(
     Ok(StatusCode::NO_CONTENT)
 }
 
-async fn fetch_template(
-    pool: &sqlx::SqlitePool,
-    id: Uuid,
-) -> Result<PromptTemplate, ApiError> {
+async fn fetch_template(pool: &sqlx::SqlitePool, id: Uuid) -> Result<PromptTemplate, ApiError> {
     sqlx::query_as!(
         PromptTemplate,
         r#"
@@ -156,9 +155,14 @@ async fn fetch_template(
 
 pub fn router() -> Router<DeploymentImpl> {
     Router::new()
-        .route("/prompt-templates", get(list_templates).post(create_template))
+        .route(
+            "/prompt-templates",
+            get(list_templates).post(create_template),
+        )
         .route(
             "/prompt-templates/{id}",
-            get(get_template).patch(update_template).delete(delete_template),
+            get(get_template)
+                .patch(update_template)
+                .delete(delete_template),
         )
 }

@@ -1,9 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type {
-  MailMessage,
-  MailRecipient,
-  MailThread,
-} from 'shared/types';
+import type { MailMessage, MailRecipient, MailThread } from 'shared/types';
 import { makeLocalApiRequest } from '@/shared/lib/localApiTransport';
 import type { ApiResponse } from 'shared/types';
 
@@ -136,7 +132,11 @@ export interface ReplyArgs {
 export function useReplyToMail() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ message_id, recipient_id, response_value }: ReplyArgs) => {
+    mutationFn: async ({
+      message_id,
+      recipient_id,
+      response_value,
+    }: ReplyArgs) => {
       const res = await makeLocalApiRequest(
         `/api/mail/messages/${message_id}/reply`,
         {

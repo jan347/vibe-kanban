@@ -1,10 +1,7 @@
 import { useMemo } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { EnvelopeIcon, EnvelopeOpenIcon } from '@phosphor-icons/react';
-import {
-  useUnreadMail,
-  type UnreadMailItem,
-} from '@/shared/hooks/useMail';
+import { useUnreadMail, type UnreadMailItem } from '@/shared/hooks/useMail';
 
 function formatRelative(iso: string): string {
   const d = new Date(iso);
@@ -40,8 +37,7 @@ function MailRow({
         </div>
         <div className="flex items-center gap-2 text-low">
           <span>
-            from{' '}
-            {item.sender.kind === 'workspace' ? 'agent' : 'human'}
+            from {item.sender.kind === 'workspace' ? 'agent' : 'human'}
           </span>
           {item.requires_response && (
             <span className="rounded-full bg-error px-2 text-base text-high">
@@ -82,7 +78,8 @@ export function MailInboxPage({ workspaceId }: MailInboxPageProps) {
     return (
       <div className="flex h-full flex-1 items-center justify-center bg-primary">
         <span className="text-low">
-          Mail unavailable: {error instanceof Error ? error.message : 'unknown error'}
+          Mail unavailable:{' '}
+          {error instanceof Error ? error.message : 'unknown error'}
         </span>
       </div>
     );
@@ -105,10 +102,7 @@ export function MailInboxPage({ workspaceId }: MailInboxPageProps) {
     <div className="flex h-full flex-1 flex-col gap-4 overflow-y-auto bg-primary p-6">
       <header className="flex items-center justify-between">
         <h1 className="text-lg text-high">
-          Inbox{' '}
-          <span className="text-low">
-            ({sorted.length} unread)
-          </span>
+          Inbox <span className="text-low">({sorted.length} unread)</span>
         </h1>
       </header>
       <ul className="flex flex-col gap-1">

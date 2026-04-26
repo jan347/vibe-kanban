@@ -6,8 +6,8 @@ use axum::{
     routing::get,
 };
 use db::models::work_item::{
-    CreateWorkItem, LinkWorkspaceToWorkItem, UpdateWorkItem, WorkItem, WorkItemRun,
-    WorkItemStatus, WorkItemWithLinks,
+    CreateWorkItem, LinkWorkspaceToWorkItem, UpdateWorkItem, WorkItem, WorkItemRun, WorkItemStatus,
+    WorkItemWithLinks,
 };
 use deployment::Deployment;
 use utils::response::ApiResponse;
@@ -100,7 +100,9 @@ pub async fn update_work_item(
     ResponseJson(payload): ResponseJson<UpdateWorkItem>,
 ) -> Result<ResponseJson<ApiResponse<WorkItem>>, ApiError> {
     let pool = &deployment.db().pool;
-    let now_str = chrono::Utc::now().format("%Y-%m-%dT%H:%M:%S%.3fZ").to_string();
+    let now_str = chrono::Utc::now()
+        .format("%Y-%m-%dT%H:%M:%S%.3fZ")
+        .to_string();
     sqlx::query!(
         r#"
         UPDATE work_items SET
@@ -188,10 +190,7 @@ pub async fn unlink_workspace(
     Ok(StatusCode::NO_CONTENT)
 }
 
-async fn fetch_work_item(
-    pool: &sqlx::SqlitePool,
-    id: Uuid,
-) -> Result<WorkItem, ApiError> {
+async fn fetch_work_item(pool: &sqlx::SqlitePool, id: Uuid) -> Result<WorkItem, ApiError> {
     sqlx::query_as!(
         WorkItem,
         r#"
@@ -216,17 +215,17 @@ async fn fetch_work_item(
 
 pub fn router() -> Router<DeploymentImpl> {
     Router::new()
-        .route(
-            "/work-items",
-            get(list_work_items).post(create_work_item),
-        )
+        .route("/work-items", get(list_work_items).post(create_work_item))
         .route(
             "/work-items/{id}",
             get(get_work_item)
                 .patch(update_work_item)
                 .delete(delete_work_item),
         )
-        .route("/work-items/{id}/links", get(get_work_item).post(link_workspace))
+        .route(
+            "/work-items/{id}/links",
+            get(get_work_item).post(link_workspace),
+        )
         .route(
             "/work-items/{id}/links/{workspace_id}",
             get(get_work_item).delete(unlink_workspace),

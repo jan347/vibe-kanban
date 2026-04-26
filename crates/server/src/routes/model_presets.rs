@@ -5,9 +5,7 @@ use axum::{
     response::Json as ResponseJson,
     routing::get,
 };
-use db::models::model_preset::{
-    CreateModelPreset, ModelPreset, UpdateModelPreset,
-};
+use db::models::model_preset::{CreateModelPreset, ModelPreset, UpdateModelPreset};
 use deployment::Deployment;
 use utils::response::ApiResponse;
 use uuid::Uuid;
@@ -89,7 +87,9 @@ pub async fn update_preset(
     ResponseJson(payload): ResponseJson<UpdateModelPreset>,
 ) -> Result<ResponseJson<ApiResponse<ModelPreset>>, ApiError> {
     let pool = &deployment.db().pool;
-    let now_str = chrono::Utc::now().format("%Y-%m-%dT%H:%M:%S%.3fZ").to_string();
+    let now_str = chrono::Utc::now()
+        .format("%Y-%m-%dT%H:%M:%S%.3fZ")
+        .to_string();
     sqlx::query!(
         r#"
         UPDATE model_presets SET
@@ -134,10 +134,7 @@ pub async fn delete_preset(
     Ok(StatusCode::NO_CONTENT)
 }
 
-async fn fetch_preset(
-    pool: &sqlx::SqlitePool,
-    id: Uuid,
-) -> Result<ModelPreset, ApiError> {
+async fn fetch_preset(pool: &sqlx::SqlitePool, id: Uuid) -> Result<ModelPreset, ApiError> {
     sqlx::query_as!(
         ModelPreset,
         r#"
