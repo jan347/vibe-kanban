@@ -1,0 +1,80 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT\n            v.workspace_id AS \"workspace_id?: Uuid\",\n            v.recipient_id AS \"recipient_id!: Uuid\",\n            'workspace' AS \"recipient_kind!: MailRecipientKind\",\n            v.message_id AS \"message_id!: Uuid\",\n            v.thread_id AS \"thread_id!: Uuid\",\n            t.subject,\n            m.sender_kind AS \"sender_kind!: MailSenderKind\",\n            m.sender_workspace_id AS \"sender_workspace_id?: Uuid\",\n            m.sender_execution_process_id AS \"sender_execution_process_id?: Uuid\",\n            m.requires_response AS \"requires_response!: bool\",\n            v.created_at AS \"created_at!: DateTime<Utc>\"\n        FROM workspace_inbox_unread v\n        JOIN mail_messages m ON m.id = v.message_id\n        JOIN mail_threads t ON t.id = v.thread_id\n        WHERE v.workspace_id = ?1\n        ORDER BY v.created_at DESC",
+  "describe": {
+    "columns": [
+      {
+        "name": "workspace_id?: Uuid",
+        "ordinal": 0,
+        "type_info": "Blob"
+      },
+      {
+        "name": "recipient_id!: Uuid",
+        "ordinal": 1,
+        "type_info": "Blob"
+      },
+      {
+        "name": "recipient_kind!: MailRecipientKind",
+        "ordinal": 2,
+        "type_info": "Null"
+      },
+      {
+        "name": "message_id!: Uuid",
+        "ordinal": 3,
+        "type_info": "Blob"
+      },
+      {
+        "name": "thread_id!: Uuid",
+        "ordinal": 4,
+        "type_info": "Blob"
+      },
+      {
+        "name": "subject",
+        "ordinal": 5,
+        "type_info": "Text"
+      },
+      {
+        "name": "sender_kind!: MailSenderKind",
+        "ordinal": 6,
+        "type_info": "Text"
+      },
+      {
+        "name": "sender_workspace_id?: Uuid",
+        "ordinal": 7,
+        "type_info": "Blob"
+      },
+      {
+        "name": "sender_execution_process_id?: Uuid",
+        "ordinal": 8,
+        "type_info": "Blob"
+      },
+      {
+        "name": "requires_response!: bool",
+        "ordinal": 9,
+        "type_info": "Integer"
+      },
+      {
+        "name": "created_at!: DateTime<Utc>",
+        "ordinal": 10,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      true,
+      true,
+      null,
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+      false,
+      false
+    ]
+  },
+  "hash": "71fef3881d9ff8eb146a2cfe94720698659e2299a1286fbf7443d9f0ce150ac9"
+}

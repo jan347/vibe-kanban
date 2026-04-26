@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "\n        INSERT INTO model_presets (\n            id, name, description, role, executor, model_id,\n            permission_mode, reasoning_effort, env_vars_json, labels_json\n        )\n        VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 10
+    },
+    "nullable": []
+  },
+  "hash": "a4423072e0325b17a332d275270e10e5ed2d6f6eeae652649aa96a41493798ec"
+}

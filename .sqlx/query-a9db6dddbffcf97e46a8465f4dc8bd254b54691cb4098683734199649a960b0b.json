@@ -1,0 +1,86 @@
+{
+  "db_name": "SQLite",
+  "query": "\n        SELECT\n            id                AS \"id!: Uuid\",\n            name,\n            description,\n            role              AS \"role!: db::models::model_preset::ModelPresetRole\",\n            executor          AS \"executor!: db::models::model_preset::ModelPresetExecutor\",\n            model_id,\n            permission_mode,\n            reasoning_effort,\n            env_vars_json,\n            labels_json,\n            created_at        AS \"created_at!: chrono::DateTime<chrono::Utc>\",\n            updated_at        AS \"updated_at!: chrono::DateTime<chrono::Utc>\"\n        FROM model_presets\n        ORDER BY updated_at DESC\n        ",
+  "describe": {
+    "columns": [
+      {
+        "name": "id!: Uuid",
+        "ordinal": 0,
+        "type_info": "Blob"
+      },
+      {
+        "name": "name",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "description",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "role!: db::models::model_preset::ModelPresetRole",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "executor!: db::models::model_preset::ModelPresetExecutor",
+        "ordinal": 4,
+        "type_info": "Text"
+      },
+      {
+        "name": "model_id",
+        "ordinal": 5,
+        "type_info": "Text"
+      },
+      {
+        "name": "permission_mode",
+        "ordinal": 6,
+        "type_info": "Text"
+      },
+      {
+        "name": "reasoning_effort",
+        "ordinal": 7,
+        "type_info": "Text"
+      },
+      {
+        "name": "env_vars_json",
+        "ordinal": 8,
+        "type_info": "Text"
+      },
+      {
+        "name": "labels_json",
+        "ordinal": 9,
+        "type_info": "Text"
+      },
+      {
+        "name": "created_at!: chrono::DateTime<chrono::Utc>",
+        "ordinal": 10,
+        "type_info": "Text"
+      },
+      {
+        "name": "updated_at!: chrono::DateTime<chrono::Utc>",
+        "ordinal": 11,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      true,
+      false,
+      true,
+      false,
+      false,
+      false,
+      true,
+      true,
+      true,
+      true,
+      false,
+      false
+    ]
+  },
+  "hash": "a9db6dddbffcf97e46a8465f4dc8bd254b54691cb4098683734199649a960b0b"
+}

@@ -1,0 +1,26 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT\n            id AS \"message_id!: Uuid\",\n            thread_id AS \"thread_id!: Uuid\"\n        FROM mail_messages\n        WHERE idempotency_key = ?1",
+  "describe": {
+    "columns": [
+      {
+        "name": "message_id!: Uuid",
+        "ordinal": 0,
+        "type_info": "Blob"
+      },
+      {
+        "name": "thread_id!: Uuid",
+        "ordinal": 1,
+        "type_info": "Blob"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      true,
+      false
+    ]
+  },
+  "hash": "b2525e465d52695e840721f498bc8c7339c9471286a88dd4128e5bd8eac43e5f"
+}

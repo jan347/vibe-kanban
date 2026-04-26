@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE mail_recipients SET responded_at = strftime('%Y-%m-%dT%H:%M:%fZ','now'),\n               response_value_json = ?1\n        WHERE id = ?2 AND message_id = ?3 AND responded_at IS NULL",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": []
+  },
+  "hash": "ca6a2fc9b0ba5273adc225e7ad6a5844079077fdc4dffd428886d8ca6fa8e2b4"
+}

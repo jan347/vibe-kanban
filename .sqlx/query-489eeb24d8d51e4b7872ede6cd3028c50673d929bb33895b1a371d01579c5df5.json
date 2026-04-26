@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "\n        UPDATE model_presets SET\n            name             = COALESCE(?1, name),\n            description      = COALESCE(?2, description),\n            role             = COALESCE(?3, role),\n            executor         = COALESCE(?4, executor),\n            model_id         = COALESCE(?5, model_id),\n            permission_mode  = COALESCE(?6, permission_mode),\n            reasoning_effort = COALESCE(?7, reasoning_effort),\n            env_vars_json    = COALESCE(?8, env_vars_json),\n            labels_json      = COALESCE(?9, labels_json),\n            updated_at       = ?10\n        WHERE id = ?11\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 11
+    },
+    "nullable": []
+  },
+  "hash": "489eeb24d8d51e4b7872ede6cd3028c50673d929bb33895b1a371d01579c5df5"
+}

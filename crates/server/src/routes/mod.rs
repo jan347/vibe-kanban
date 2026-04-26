@@ -18,6 +18,7 @@ pub mod frontend;
 pub mod health;
 pub mod host_relay;
 pub mod mail;
+pub mod model_presets;
 pub mod oauth;
 pub mod organizations;
 pub mod preview;
@@ -25,6 +26,7 @@ pub mod relay_auth;
 pub mod releases;
 pub mod remote;
 pub mod repo;
+pub mod repo_bundles;
 pub mod scratch;
 pub mod search;
 pub mod sessions;
@@ -49,6 +51,8 @@ pub fn router(deployment: DeploymentImpl) -> IntoMakeService<Router> {
         .merge(events::router(&deployment))
         .merge(approvals::router())
         .merge(mail::router(&deployment))
+        .merge(model_presets::router())
+        .merge(repo_bundles::router())
         .merge(scratch::router(&deployment))
         .merge(search::router(&deployment))
         .merge(preview::api_router())

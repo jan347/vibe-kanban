@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO mail_recipients (\n               id,\n               message_id,\n               recipient_kind,\n               recipient_workspace_id\n           )\n           VALUES (?1, ?2, ?3, ?4)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 4
+    },
+    "nullable": []
+  },
+  "hash": "2c0336fc0c7f9cc5652658dace1525f49590218e02688130707be61493983a8b"
+}

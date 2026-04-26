@@ -1,0 +1,50 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT\n            t.id AS \"thread_id!: Uuid\",\n            t.subject AS \"subject!\",\n            t.kind AS \"kind!: MailThreadKind\",\n            MAX(m.created_at) AS \"last_message_at!: DateTime<Utc>\",\n            COALESCE(SUM(\n                CASE\n                    WHEN r.recipient_kind = 'workspace'\n                     AND r.recipient_workspace_id = ?1\n                     AND r.read_at IS NULL\n                    THEN 1\n                    ELSE 0\n                END\n            ), 0) AS \"unread_count!: i64\",\n            t.created_at AS \"created_at!: DateTime<Utc>\"\n        FROM mail_threads t\n        JOIN mail_messages m ON m.thread_id = t.id\n        LEFT JOIN mail_recipients r ON r.message_id = m.id\n        WHERE m.sender_workspace_id = ?1\n           OR EXISTS (\n               SELECT 1\n               FROM mail_recipients rx\n               JOIN mail_messages mx ON mx.id = rx.message_id\n               WHERE mx.thread_id = t.id\n                 AND rx.recipient_kind = 'workspace'\n                 AND rx.recipient_workspace_id = ?1\n           )\n        GROUP BY t.id\n        ORDER BY MAX(m.created_at) DESC\n        LIMIT ?2",
+  "describe": {
+    "columns": [
+      {
+        "name": "thread_id!: Uuid",
+        "ordinal": 0,
+        "type_info": "Blob"
+      },
+      {
+        "name": "subject!",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "kind!: MailThreadKind",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "last_message_at!: DateTime<Utc>",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "unread_count!: i64",
+        "ordinal": 4,
+        "type_info": "Integer"
+      },
+      {
+        "name": "created_at!: DateTime<Utc>",
+        "ordinal": 5,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": [
+      true,
+      true,
+      true,
+      false,
+      false,
+      true
+    ]
+  },
+  "hash": "88ce77621dc9705abd86770be5ab7310a484ba8724a59dc956a78d9ff7f41977"
+}

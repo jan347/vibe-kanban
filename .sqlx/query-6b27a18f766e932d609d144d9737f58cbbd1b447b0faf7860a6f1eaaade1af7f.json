@@ -1,0 +1,56 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT\n                id AS \"id!: Uuid\",\n                message_id AS \"message_id!: Uuid\",\n                recipient_kind AS \"recipient_kind!: MailRecipientKind\",\n                recipient_workspace_id AS \"recipient_workspace_id?: Uuid\",\n                read_at AS \"read_at?: DateTime<Utc>\",\n                responded_at AS \"responded_at?: DateTime<Utc>\",\n                response_value_json\n            FROM mail_recipients\n            WHERE message_id = ?\n            ORDER BY id ASC",
+  "describe": {
+    "columns": [
+      {
+        "name": "id!: Uuid",
+        "ordinal": 0,
+        "type_info": "Blob"
+      },
+      {
+        "name": "message_id!: Uuid",
+        "ordinal": 1,
+        "type_info": "Blob"
+      },
+      {
+        "name": "recipient_kind!: MailRecipientKind",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "recipient_workspace_id?: Uuid",
+        "ordinal": 3,
+        "type_info": "Blob"
+      },
+      {
+        "name": "read_at?: DateTime<Utc>",
+        "ordinal": 4,
+        "type_info": "Text"
+      },
+      {
+        "name": "responded_at?: DateTime<Utc>",
+        "ordinal": 5,
+        "type_info": "Text"
+      },
+      {
+        "name": "response_value_json",
+        "ordinal": 6,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      true,
+      false,
+      false,
+      true,
+      true,
+      true,
+      true
+    ]
+  },
+  "hash": "6b27a18f766e932d609d144d9737f58cbbd1b447b0faf7860a6f1eaaade1af7f"
+}

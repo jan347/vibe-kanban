@@ -1,0 +1,62 @@
+{
+  "db_name": "SQLite",
+  "query": "\n        SELECT\n            id                              AS \"id!: Uuid\",\n            name,\n            description,\n            repo_ids_json,\n            default_branch_overrides_json,\n            default_preset_id               AS \"default_preset_id?: Uuid\",\n            created_at                      AS \"created_at!: chrono::DateTime<chrono::Utc>\",\n            updated_at                      AS \"updated_at!: chrono::DateTime<chrono::Utc>\"\n        FROM repo_bundles\n        ORDER BY updated_at DESC\n        ",
+  "describe": {
+    "columns": [
+      {
+        "name": "id!: Uuid",
+        "ordinal": 0,
+        "type_info": "Blob"
+      },
+      {
+        "name": "name",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "description",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "repo_ids_json",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "default_branch_overrides_json",
+        "ordinal": 4,
+        "type_info": "Text"
+      },
+      {
+        "name": "default_preset_id?: Uuid",
+        "ordinal": 5,
+        "type_info": "Blob"
+      },
+      {
+        "name": "created_at!: chrono::DateTime<chrono::Utc>",
+        "ordinal": 6,
+        "type_info": "Text"
+      },
+      {
+        "name": "updated_at!: chrono::DateTime<chrono::Utc>",
+        "ordinal": 7,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      true,
+      false,
+      true,
+      false,
+      true,
+      true,
+      false,
+      false
+    ]
+  },
+  "hash": "128546b701ad4183a623c03cf20daac2cb2c1ea60b4294215dc00dfcea0bda01"
+}

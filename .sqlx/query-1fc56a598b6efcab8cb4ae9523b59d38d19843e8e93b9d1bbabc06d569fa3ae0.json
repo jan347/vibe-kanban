@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "\n        UPDATE repo_bundles SET\n            name                          = COALESCE(?1, name),\n            description                   = COALESCE(?2, description),\n            repo_ids_json                 = COALESCE(?3, repo_ids_json),\n            default_branch_overrides_json = COALESCE(?4, default_branch_overrides_json),\n            default_preset_id             = COALESCE(?5, default_preset_id),\n            updated_at                    = ?6\n        WHERE id = ?7\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 7
+    },
+    "nullable": []
+  },
+  "hash": "1fc56a598b6efcab8cb4ae9523b59d38d19843e8e93b9d1bbabc06d569fa3ae0"
+}

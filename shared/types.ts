@@ -186,6 +186,30 @@ export type MailRecipient = { id: string, message_id: string, recipient_kind: Ma
 
 export type MailRecipientKind = "workspace" | "human";
 
+export type ModelPreset = { id: string, name: string, description: string | null, role: ModelPresetRole, executor: ModelPresetExecutor, model_id: string, permission_mode: string | null, reasoning_effort: string | null, env_vars_json: string | null, labels_json: string | null, created_at: string, updated_at: string, };
+
+export type ModelPresetRole = "planner" | "implementer" | "reviewer" | "qa" | "diagrammer" | "summarizer" | "other";
+
+export type ModelPresetExecutor = "CLAUDE_CODE" | "CODEX" | "QWEN_CODE" | "OPENCODE" | "GEMINI" | "CURSOR_AGENT" | "AMP" | "DROID";
+
+export type CreateModelPreset = { name: string, description: string | null, role: ModelPresetRole, executor: ModelPresetExecutor, model_id: string, permission_mode: string | null, reasoning_effort: string | null, env_vars_json: string | null, labels_json: string | null, };
+
+export type UpdateModelPreset = { name: string | null, description: string | null, role: ModelPresetRole | null, executor: ModelPresetExecutor | null, model_id: string | null, permission_mode: string | null, reasoning_effort: string | null, env_vars_json: string | null, labels_json: string | null, };
+
+export type RepoBundle = { id: string, name: string, description: string | null, 
+/**
+ * JSON array of repo UUIDs (TEXT in SQLite). Parse with serde_json on read.
+ */
+repo_ids_json: string, 
+/**
+ * JSON map: repo_id -> branch override. Optional.
+ */
+default_branch_overrides_json: string | null, default_preset_id: string | null, created_at: string, updated_at: string, };
+
+export type CreateRepoBundle = { name: string, description: string | null, repo_ids: Array<string>, default_branch_overrides: { [key in string]?: string } | null, default_preset_id: string | null, };
+
+export type UpdateRepoBundle = { name: string | null, description: string | null, repo_ids: Array<string> | null, default_branch_overrides: { [key in string]?: string } | null, default_preset_id: string | null, };
+
 export type Merge = { "type": "direct" } & DirectMerge | { "type": "pr" } & PrMerge;
 
 export type DirectMerge = { id: string, workspace_id: string, repo_id: string, merge_commit: string, target_branch_name: string, created_at: string, };
