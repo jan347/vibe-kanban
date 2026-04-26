@@ -23,6 +23,8 @@ anyhow = { workspace = true }
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true }
 uuid = { version = "1.0", features = ["v4", "serde"] }
+sqlx = { version = "0.8.6", features = ["runtime-tokio", "tls-rustls-aws-lc-rs", "sqlite", "chrono", "uuid"] }
+chrono = { version = "0.4", features = ["serde"] }
 rmcp = { version = "1.2.0", features = ["server", "transport-io"] }
 schemars = { workspace = true }
 sentry = { version = "0.46.2", default-features = false, features = ["anyhow", "backtrace", "panic", "debug-images", "reqwest", "rustls"] }

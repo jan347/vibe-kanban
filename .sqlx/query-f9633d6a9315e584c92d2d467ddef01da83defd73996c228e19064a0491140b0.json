@@ -1,0 +1,62 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT id AS \"id!: Uuid\", title, description,\n                   status AS \"status!: WorkItemStatus\", priority AS \"priority!: i64\",\n                   tags_json, created_at AS \"created_at!: chrono::DateTime<chrono::Utc>\",\n                   updated_at AS \"updated_at!: chrono::DateTime<chrono::Utc>\"\n                   FROM work_items ORDER BY priority DESC, updated_at DESC",
+  "describe": {
+    "columns": [
+      {
+        "name": "id!: Uuid",
+        "ordinal": 0,
+        "type_info": "Blob"
+      },
+      {
+        "name": "title",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "description",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "status!: WorkItemStatus",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "priority!: i64",
+        "ordinal": 4,
+        "type_info": "Integer"
+      },
+      {
+        "name": "tags_json",
+        "ordinal": 5,
+        "type_info": "Text"
+      },
+      {
+        "name": "created_at!: chrono::DateTime<chrono::Utc>",
+        "ordinal": 6,
+        "type_info": "Text"
+      },
+      {
+        "name": "updated_at!: chrono::DateTime<chrono::Utc>",
+        "ordinal": 7,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      true,
+      false,
+      true,
+      false,
+      false,
+      true,
+      false,
+      false
+    ]
+  },
+  "hash": "f9633d6a9315e584c92d2d467ddef01da83defd73996c228e19064a0491140b0"
+}

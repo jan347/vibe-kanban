@@ -1,0 +1,92 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT id AS \"id!: Uuid\", work_item_id AS \"work_item_id?: Uuid\",\n                       kind AS \"kind!: ArtifactKind\", title, body_text, body_json,\n                       version AS \"version!: i64\", parent_artifact_id AS \"parent_artifact_id?: Uuid\",\n                       created_by_kind, created_by_workspace_id AS \"created_by_workspace_id?: Uuid\",\n                       created_by_execution_process_id AS \"created_by_execution_process_id?: Uuid\",\n                       created_at AS \"created_at!: chrono::DateTime<chrono::Utc>\",\n                       accepted_at AS \"accepted_at?: chrono::DateTime<chrono::Utc>\"\n                       FROM artifacts WHERE work_item_id = ?1 AND kind = ?2\n                       ORDER BY created_at DESC",
+  "describe": {
+    "columns": [
+      {
+        "name": "id!: Uuid",
+        "ordinal": 0,
+        "type_info": "Blob"
+      },
+      {
+        "name": "work_item_id?: Uuid",
+        "ordinal": 1,
+        "type_info": "Blob"
+      },
+      {
+        "name": "kind!: ArtifactKind",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "title",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "body_text",
+        "ordinal": 4,
+        "type_info": "Text"
+      },
+      {
+        "name": "body_json",
+        "ordinal": 5,
+        "type_info": "Text"
+      },
+      {
+        "name": "version!: i64",
+        "ordinal": 6,
+        "type_info": "Integer"
+      },
+      {
+        "name": "parent_artifact_id?: Uuid",
+        "ordinal": 7,
+        "type_info": "Blob"
+      },
+      {
+        "name": "created_by_kind",
+        "ordinal": 8,
+        "type_info": "Text"
+      },
+      {
+        "name": "created_by_workspace_id?: Uuid",
+        "ordinal": 9,
+        "type_info": "Blob"
+      },
+      {
+        "name": "created_by_execution_process_id?: Uuid",
+        "ordinal": 10,
+        "type_info": "Blob"
+      },
+      {
+        "name": "created_at!: chrono::DateTime<chrono::Utc>",
+        "ordinal": 11,
+        "type_info": "Text"
+      },
+      {
+        "name": "accepted_at?: chrono::DateTime<chrono::Utc>",
+        "ordinal": 12,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": [
+      true,
+      true,
+      false,
+      false,
+      true,
+      true,
+      false,
+      true,
+      false,
+      true,
+      true,
+      false,
+      true
+    ]
+  },
+  "hash": "ac26e9d973b37ec344d304157cd6792cf756bea147e6f038841ef4e0cda5a299"
+}

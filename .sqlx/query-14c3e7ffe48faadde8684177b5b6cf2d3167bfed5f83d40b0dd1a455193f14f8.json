@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO artifacts (id, work_item_id, kind, title, body_text, body_json,\n               parent_artifact_id, created_by_kind, created_by_workspace_id)\n               VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 9
+    },
+    "nullable": []
+  },
+  "hash": "14c3e7ffe48faadde8684177b5b6cf2d3167bfed5f83d40b0dd1a455193f14f8"
+}

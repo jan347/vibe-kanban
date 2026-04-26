@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT OR IGNORE INTO work_item_runs (work_item_id, workspace_id, role)\n               VALUES (?1, ?2, ?3)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": []
+  },
+  "hash": "85ddd841b114b8802106fc068485729efe772c331b359aebf079edac2727f91b"
+}

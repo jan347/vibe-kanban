@@ -5181,6 +5181,7 @@ version = "0.1.44"
 dependencies = [
  "anyhow",
  "api-types",
+ "chrono",
  "db",
  "executors",
  "regex",
@@ -5191,6 +5192,7 @@ dependencies = [
  "sentry",
  "serde",
  "serde_json",
+ "sqlx",
  "thiserror 2.0.18",
  "tokio",
  "tracing",

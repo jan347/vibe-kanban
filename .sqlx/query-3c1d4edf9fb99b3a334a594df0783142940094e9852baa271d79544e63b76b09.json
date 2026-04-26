@@ -1,0 +1,50 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT\n               work_item_id AS \"work_item_id!: Uuid\",\n               context_type AS \"context_type!: String\",\n               context_id AS \"context_id!: Uuid\",\n               context_title AS \"context_title: String\",\n               context_body AS \"context_body: String\",\n               context_at\n               FROM work_item_shared_context\n               WHERE work_item_id = ?1\n               ORDER BY context_at DESC",
+  "describe": {
+    "columns": [
+      {
+        "name": "work_item_id!: Uuid",
+        "ordinal": 0,
+        "type_info": "Blob"
+      },
+      {
+        "name": "context_type!: String",
+        "ordinal": 1,
+        "type_info": "Null"
+      },
+      {
+        "name": "context_id!: Uuid",
+        "ordinal": 2,
+        "type_info": "Blob"
+      },
+      {
+        "name": "context_title: String",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "context_body: String",
+        "ordinal": 4,
+        "type_info": "Text"
+      },
+      {
+        "name": "context_at",
+        "ordinal": 5,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      true,
+      null,
+      true,
+      false,
+      true,
+      true
+    ]
+  },
+  "hash": "3c1d4edf9fb99b3a334a594df0783142940094e9852baa271d79544e63b76b09"
+}
