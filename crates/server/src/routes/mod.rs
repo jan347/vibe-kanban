@@ -10,6 +10,7 @@ pub mod approvals;
 pub mod artifacts;
 pub mod config;
 pub mod containers;
+pub mod dispatch;
 pub mod filesystem;
 // pub mod github;
 pub mod attachments;
@@ -59,6 +60,7 @@ pub fn router(deployment: DeploymentImpl) -> IntoMakeService<Router> {
         .merge(repo_bundles::router())
         .merge(work_items::router())
         .merge(artifacts::router())
+        .merge(dispatch::router())
         .merge(scratch::router(&deployment))
         .merge(search::router(&deployment))
         .merge(preview::api_router())

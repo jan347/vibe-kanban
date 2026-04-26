@@ -1,0 +1,80 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT id AS \"id!: Uuid\", work_item_id AS \"work_item_id!: Uuid\",\n                   workspace_id AS \"workspace_id!: Uuid\", session_id AS \"session_id?: Uuid\",\n                   prompt_template_id AS \"prompt_template_id?: Uuid\", prompt_text,\n                   model_preset_id AS \"model_preset_id?: Uuid\",\n                   status AS \"status!: DispatchStatus\",\n                   started_at AS \"started_at!: chrono::DateTime<chrono::Utc>\",\n                   completed_at AS \"completed_at?: chrono::DateTime<chrono::Utc>\",\n                   error_message\n                   FROM dispatch_log WHERE work_item_id = ?1\n                   ORDER BY started_at DESC",
+  "describe": {
+    "columns": [
+      {
+        "name": "id!: Uuid",
+        "ordinal": 0,
+        "type_info": "Blob"
+      },
+      {
+        "name": "work_item_id!: Uuid",
+        "ordinal": 1,
+        "type_info": "Blob"
+      },
+      {
+        "name": "workspace_id!: Uuid",
+        "ordinal": 2,
+        "type_info": "Blob"
+      },
+      {
+        "name": "session_id?: Uuid",
+        "ordinal": 3,
+        "type_info": "Blob"
+      },
+      {
+        "name": "prompt_template_id?: Uuid",
+        "ordinal": 4,
+        "type_info": "Blob"
+      },
+      {
+        "name": "prompt_text",
+        "ordinal": 5,
+        "type_info": "Text"
+      },
+      {
+        "name": "model_preset_id?: Uuid",
+        "ordinal": 6,
+        "type_info": "Blob"
+      },
+      {
+        "name": "status!: DispatchStatus",
+        "ordinal": 7,
+        "type_info": "Text"
+      },
+      {
+        "name": "started_at!: chrono::DateTime<chrono::Utc>",
+        "ordinal": 8,
+        "type_info": "Text"
+      },
+      {
+        "name": "completed_at?: chrono::DateTime<chrono::Utc>",
+        "ordinal": 9,
+        "type_info": "Text"
+      },
+      {
+        "name": "error_message",
+        "ordinal": 10,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      true,
+      false,
+      false,
+      true,
+      true,
+      false,
+      true,
+      false,
+      false,
+      true,
+      true
+    ]
+  },
+  "hash": "a7d0c453875e5a4ad417187b3707663ac7465236070f5e17a3ad53a19b0144a4"
+}

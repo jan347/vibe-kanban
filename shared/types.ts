@@ -252,6 +252,12 @@ export type AcceptArtifactRequest = { accepted: boolean, };
 
 export type SharedContextItem = { work_item_id: string, context_type: string, context_id: string, context_title: string | null, context_body: string | null, context_at: string | null, };
 
+export type DispatchLogEntry = { id: string, work_item_id: string, workspace_id: string, session_id: string | null, prompt_template_id: string | null, prompt_text: string, model_preset_id: string | null, status: DispatchStatus, started_at: string, completed_at: string | null, error_message: string | null, };
+
+export type DispatchStatus = "pending" | "running" | "completed" | "failed" | "cancelled";
+
+export type CreateDispatch = { work_item_id: string, workspace_id: string, prompt_text: string, prompt_template_id: string | null, model_preset_id: string | null, };
+
 export type Merge = { "type": "direct" } & DirectMerge | { "type": "pr" } & PrMerge;
 
 export type DirectMerge = { id: string, workspace_id: string, repo_id: string, merge_commit: string, target_branch_name: string, created_at: string, };
