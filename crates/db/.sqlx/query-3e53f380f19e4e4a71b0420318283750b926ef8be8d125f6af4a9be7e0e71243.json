@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "\n        INSERT OR IGNORE INTO mail_recipients (\n            id, message_id, recipient_kind, recipient_workspace_id\n        )\n        SELECT randomblob(16), ?1, ?2, wir.workspace_id\n        FROM work_item_runs wir\n        WHERE wir.work_item_id = ?3\n          AND EXISTS (\n              SELECT 1 FROM sessions s\n              JOIN execution_processes ep ON ep.session_id = s.id\n              WHERE s.workspace_id = wir.workspace_id\n                AND ep.status = 'running'\n                AND ep.run_reason = 'codingagent'\n          )\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": []
+  },
+  "hash": "3e53f380f19e4e4a71b0420318283750b926ef8be8d125f6af4a9be7e0e71243"
+}

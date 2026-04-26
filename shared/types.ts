@@ -192,6 +192,10 @@ export type BroadcastMailRequest = { thread_id: string | null, work_item_id: str
 
 export type BroadcastMailResponse = { message_id: string, thread_id: string, recipient_count: bigint, };
 
+export type MailAttachment = { id: string, message_id: string, inline_blob_path: string, mime_type: string | null, size_bytes: bigint | null, filename: string | null, created_at: string, };
+
+export type CreateMailAttachment = { message_id: string, inline_blob_path: string, mime_type: string | null, size_bytes: bigint | null, filename: string | null, };
+
 export type ModelPreset = { id: string, name: string, description: string | null, role: ModelPresetRole, executor: ModelPresetExecutor, model_id: string, permission_mode: string | null, reasoning_effort: string | null, env_vars_json: string | null, labels_json: string | null, created_at: string, updated_at: string, };
 
 export type ModelPresetRole = "planner" | "implementer" | "reviewer" | "qa" | "diagrammer" | "summarizer" | "other";

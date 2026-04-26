@@ -60,6 +60,8 @@ fn generate_types_content() -> String {
         db::models::mail::MailSender::decl(),
         db::models::mail::BroadcastMailRequest::decl(),
         db::models::mail::BroadcastMailResponse::decl(),
+        db::models::mail::MailAttachment::decl(),
+        db::models::mail::CreateMailAttachment::decl(),
         db::models::model_preset::ModelPreset::decl(),
         db::models::model_preset::ModelPresetRole::decl(),
         db::models::model_preset::ModelPresetExecutor::decl(),

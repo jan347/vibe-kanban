@@ -78,6 +78,30 @@ pub struct MailRecipient {
     pub response_value_json: Option<String>,
 }
 
+/// Phase 4c: inline-only mail attachments. The `inline_blob_path` is a path
+/// (under a configured per-app data dir) to a blob file persisted at upload
+/// time. Phase 6 adds an `artifact_id` column for linking to the artifact
+/// canvas; until then attachments are independent blobs.
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize, TS)]
+pub struct MailAttachment {
+    pub id: Uuid,
+    pub message_id: Uuid,
+    pub inline_blob_path: String,
+    pub mime_type: Option<String>,
+    pub size_bytes: Option<i64>,
+    pub filename: Option<String>,
+    pub created_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+pub struct CreateMailAttachment {
+    pub message_id: Uuid,
+    pub inline_blob_path: String,
+    pub mime_type: Option<String>,
+    pub size_bytes: Option<i64>,
+    pub filename: Option<String>,
+}
+
 #[derive(Debug, Error)]
 pub enum MailError {
     #[error(transparent)]
@@ -695,6 +719,82 @@ pub async fn broadcast_mail(
         thread_id,
         recipient_count,
     })
+}
+
+/// Phase 4c: attach an existing blob (already persisted to disk) to a message.
+/// The caller is responsible for the upload-to-disk step; this just records
+/// the metadata.
+pub async fn attach_blob_to_message(
+    pool: &SqlitePool,
+    request: CreateMailAttachment,
+) -> Result<MailAttachment, MailError> {
+    if request.inline_blob_path.trim().is_empty() {
+        return Err(MailError::InvalidRequest(
+            "inline_blob_path must not be empty".into(),
+        ));
+    }
+    let id = Uuid::new_v4();
+    sqlx::query!(
+        r#"
+        INSERT INTO mail_attachments (
+            id, message_id, inline_blob_path, mime_type, size_bytes, filename
+        ) VALUES (?1, ?2, ?3, ?4, ?5, ?6)
+        "#,
+        id,
+        request.message_id,
+        request.inline_blob_path,
+        request.mime_type,
+        request.size_bytes,
+        request.filename,
+    )
+    .execute(pool)
+    .await?;
+    sqlx::query_as!(
+        MailAttachment,
+        r#"
+        SELECT
+            id               AS "id!: Uuid",
+            message_id       AS "message_id!: Uuid",
+            inline_blob_path,
+            mime_type,
+            size_bytes,
+            filename,
+            created_at       AS "created_at!: DateTime<Utc>"
+        FROM mail_attachments
+        WHERE id = ?1
+        "#,
+        id
+    )
+    .fetch_one(pool)
+    .await
+    .map_err(MailError::from)
+}
+
+/// List attachments for a single message.
+pub async fn list_attachments_for_message(
+    pool: &SqlitePool,
+    message_id: Uuid,
+) -> Result<Vec<MailAttachment>, MailError> {
+    sqlx::query_as!(
+        MailAttachment,
+        r#"
+        SELECT
+            id               AS "id!: Uuid",
+            message_id       AS "message_id!: Uuid",
+            inline_blob_path,
+            mime_type,
+            size_bytes,
+            filename,
+            created_at       AS "created_at!: DateTime<Utc>"
+        FROM mail_attachments
+        WHERE message_id = ?1
+        ORDER BY created_at ASC
+        "#,
+        message_id
+    )
+    .fetch_all(pool)
+    .await
+    .map_err(MailError::from)
 }
 
 pub async fn list_threads_for_workspace(

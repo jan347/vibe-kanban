@@ -6,10 +6,11 @@ use axum::{
     routing::{get, post},
 };
 use db::models::mail::{
-    AwaitingReplyItem, BroadcastMailRequest, BroadcastMailResponse, MailError,
-    MailMessageWithRecipients, MailOkResponse, MailThreadSummary, MailThreadWithMessages,
-    ReplyMailRequest, SendMailRequest, SendMailResponse, UnreadMailItem, broadcast_mail,
-    get_message_with_recipients, get_thread_with_messages, list_threads_for_workspace,
+    AwaitingReplyItem, BroadcastMailRequest, BroadcastMailResponse, CreateMailAttachment,
+    MailAttachment, MailError, MailMessageWithRecipients, MailOkResponse, MailThreadSummary,
+    MailThreadWithMessages, ReplyMailRequest, SendMailRequest, SendMailResponse, UnreadMailItem,
+    attach_blob_to_message, broadcast_mail, get_message_with_recipients,
+    get_thread_with_messages, list_attachments_for_message, list_threads_for_workspace,
     list_workspace_awaiting_reply, list_workspace_unread, reply_to_message, send_mail,
 };
 use deployment::Deployment;
@@ -128,6 +129,42 @@ async fn list_awaiting_reply(
         .map_err(mail_error_response)
 }
 
+#[derive(Debug, Deserialize)]
+struct AttachBlobRequest {
+    inline_blob_path: String,
+    mime_type: Option<String>,
+    size_bytes: Option<i64>,
+    filename: Option<String>,
+}
+
+async fn attach_blob(
+    State(deployment): State<DeploymentImpl>,
+    Path(message_id): Path<Uuid>,
+    ResponseJson(payload): ResponseJson<AttachBlobRequest>,
+) -> MailRouteResult<MailAttachment> {
+    let req = CreateMailAttachment {
+        message_id,
+        inline_blob_path: payload.inline_blob_path,
+        mime_type: payload.mime_type,
+        size_bytes: payload.size_bytes,
+        filename: payload.filename,
+    };
+    attach_blob_to_message(&deployment.db().pool, req)
+        .await
+        .map(|att| ResponseJson(ApiResponse::success(att)))
+        .map_err(mail_error_response)
+}
+
+async fn list_attachments(
+    State(deployment): State<DeploymentImpl>,
+    Path(message_id): Path<Uuid>,
+) -> MailRouteResult<Vec<MailAttachment>> {
+    list_attachments_for_message(&deployment.db().pool, message_id)
+        .await
+        .map(|atts| ResponseJson(ApiResponse::success(atts)))
+        .map_err(mail_error_response)
+}
+
 fn mail_error_response(error: MailError) -> (StatusCode, ResponseJson<serde_json::Value>) {
     match error {
         MailError::AlreadyResponded => (
@@ -162,4 +199,8 @@ pub fn router(_deployment: &DeploymentImpl) -> Router<DeploymentImpl> {
         .route("/mail/messages/{message_id}/reply", post(reply))
         .route("/mail/inbox/unread", get(list_unread))
         .route("/mail/awaiting-reply", get(list_awaiting_reply))
+        .route(
+            "/mail/messages/{message_id}/attachments",
+            get(list_attachments).post(attach_blob),
+        )
 }
