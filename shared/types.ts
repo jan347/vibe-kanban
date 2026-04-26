@@ -234,6 +234,14 @@ export type LinkWorkspaceToWorkItem = { workspace_id: string, role: string | nul
 
 export type WorkItemWithLinks = { work_item: WorkItem, linked_runs: Array<WorkItemRun>, };
 
+export type PromptTemplate = { id: string, name: string, role: PromptTemplateRole, description: string | null, body_text: string, preset_id: string | null, bundle_id: string | null, tags_json: string | null, created_at: string, updated_at: string, };
+
+export type PromptTemplateRole = "implement" | "investigate" | "review" | "qa" | "design_polish" | "docs" | "security" | "other";
+
+export type CreatePromptTemplate = { name: string, role: PromptTemplateRole, description: string | null, body_text: string, preset_id: string | null, bundle_id: string | null, tags_json: string | null, };
+
+export type UpdatePromptTemplate = { name: string | null, role: PromptTemplateRole | null, description: string | null, body_text: string | null, preset_id: string | null, bundle_id: string | null, tags_json: string | null, };
+
 export type Merge = { "type": "direct" } & DirectMerge | { "type": "pr" } & PrMerge;
 
 export type DirectMerge = { id: string, workspace_id: string, repo_id: string, merge_commit: string, target_branch_name: string, created_at: string, };

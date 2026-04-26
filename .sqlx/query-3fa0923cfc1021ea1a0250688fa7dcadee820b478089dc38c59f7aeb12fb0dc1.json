@@ -1,0 +1,74 @@
+{
+  "db_name": "SQLite",
+  "query": "\n        SELECT\n            id          AS \"id!: Uuid\",\n            name,\n            role        AS \"role!: PromptTemplateRole\",\n            description,\n            body_text,\n            preset_id   AS \"preset_id?: Uuid\",\n            bundle_id   AS \"bundle_id?: Uuid\",\n            tags_json,\n            created_at  AS \"created_at!: chrono::DateTime<chrono::Utc>\",\n            updated_at  AS \"updated_at!: chrono::DateTime<chrono::Utc>\"\n        FROM prompt_templates\n        WHERE id = ?1\n        ",
+  "describe": {
+    "columns": [
+      {
+        "name": "id!: Uuid",
+        "ordinal": 0,
+        "type_info": "Blob"
+      },
+      {
+        "name": "name",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "role!: PromptTemplateRole",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "description",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "body_text",
+        "ordinal": 4,
+        "type_info": "Text"
+      },
+      {
+        "name": "preset_id?: Uuid",
+        "ordinal": 5,
+        "type_info": "Blob"
+      },
+      {
+        "name": "bundle_id?: Uuid",
+        "ordinal": 6,
+        "type_info": "Blob"
+      },
+      {
+        "name": "tags_json",
+        "ordinal": 7,
+        "type_info": "Text"
+      },
+      {
+        "name": "created_at!: chrono::DateTime<chrono::Utc>",
+        "ordinal": 8,
+        "type_info": "Text"
+      },
+      {
+        "name": "updated_at!: chrono::DateTime<chrono::Utc>",
+        "ordinal": 9,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      true,
+      false,
+      false,
+      true,
+      false,
+      true,
+      true,
+      true,
+      false,
+      false
+    ]
+  },
+  "hash": "3fa0923cfc1021ea1a0250688fa7dcadee820b478089dc38c59f7aeb12fb0dc1"
+}

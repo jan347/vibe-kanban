@@ -8,6 +8,7 @@ pub mod merge;
 pub mod model_preset;
 pub mod repo_bundle;
 pub mod project;
+pub mod prompt_template;
 pub mod pull_request;
 pub mod repo;
 pub mod requests;

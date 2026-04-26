@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "\n        UPDATE prompt_templates SET\n            name        = COALESCE(?1, name),\n            role        = COALESCE(?2, role),\n            description = COALESCE(?3, description),\n            body_text   = COALESCE(?4, body_text),\n            preset_id   = COALESCE(?5, preset_id),\n            bundle_id   = COALESCE(?6, bundle_id),\n            tags_json   = COALESCE(?7, tags_json),\n            updated_at  = ?8\n        WHERE id = ?9\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 9
+    },
+    "nullable": []
+  },
+  "hash": "99672e45828e0c2fe2176beef0baa6ad6ba54b39944a39b9e94c5111bffaa9c7"
+}

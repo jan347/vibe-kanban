@@ -20,6 +20,7 @@ pub mod host_relay;
 pub mod mail;
 pub mod model_presets;
 pub mod oauth;
+pub mod prompt_templates;
 pub mod organizations;
 pub mod preview;
 pub mod relay_auth;
@@ -53,6 +54,7 @@ pub fn router(deployment: DeploymentImpl) -> IntoMakeService<Router> {
         .merge(approvals::router())
         .merge(mail::router(&deployment))
         .merge(model_presets::router())
+        .merge(prompt_templates::router())
         .merge(repo_bundles::router())
         .merge(work_items::router())
         .merge(scratch::router(&deployment))

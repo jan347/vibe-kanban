@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "\n        INSERT INTO prompt_templates (\n            id, name, role, description, body_text,\n            preset_id, bundle_id, tags_json\n        )\n        VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 8
+    },
+    "nullable": []
+  },
+  "hash": "6af72ca8a2610488fe90ec8b4a3de0051fcfc9b8a5188a7076d33c950338d4b6"
+}
