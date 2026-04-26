@@ -264,7 +264,7 @@ export type UpdateSafetyConfig = { require_human_approval: boolean | null, max_c
 
 export type SafetyCheckResult = { allowed: boolean, reason: string | null, active_dispatches: bigint, daily_dispatches: bigint, require_human_approval: boolean, };
 
-export type AutoApprovalLogEntry = { id: string, workspace_id: string, action_kind: string, action_summary: string, decision: string, reasoning: string | null, decided_by: string, decided_at: string, resolved_decision: string | null, resolved_at: string | null, };
+export type AutoApprovalLogEntry = { id: string, workspace_id: string, action_kind: string, action_summary: string, decision: string, reasoning: string | null, decided_by: string, decided_at: string, resolved_decision: string | null, resolved_at: string | null, approval_id: string | null, };
 
 export type AutoApprovalRequest = { workspace_id: string, action_kind: string, action_summary: string, };
 

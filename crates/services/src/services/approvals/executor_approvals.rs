@@ -5,10 +5,12 @@ use db::{self, DBService, models::execution_process::ExecutionProcess};
 use executors::approvals::{ExecutorApprovalError, ExecutorApprovalService};
 use tokio::sync::Mutex;
 use tokio_util::sync::CancellationToken;
-use utils::approvals::{ApprovalOutcome, ApprovalRequest, ApprovalStatus, QuestionStatus};
+use utils::approvals::{
+    ApprovalOutcome, ApprovalRequest, ApprovalResponse, ApprovalStatus, QuestionStatus,
+};
 use uuid::Uuid;
 
-use crate::services::{approvals::Approvals, notification::NotificationService};
+use crate::services::{approvals::Approvals, auto_approval, notification::NotificationService};
 
 type ApprovalWaiter = futures::future::Shared<futures::future::BoxFuture<'static, ApprovalOutcome>>;
 
@@ -89,6 +91,56 @@ impl ExecutorApprovalBridge {
                 format!("Tool '{}' requires approval", tool_name),
             )
         };
+
+        // Auto-approval supervisor: only consult for tool gates, not
+        // questions. Questions require human input; the supervisor can't
+        // synthesize answers.
+        if !is_question && let Some(ws_id) = workspace_id {
+            match auto_approval::evaluate_and_log(
+                &self.db.pool,
+                ws_id,
+                "tool_call",
+                tool_name,
+                Some(&approval_id),
+            )
+            .await
+            {
+                Ok(decision) => match decision.decision.as_str() {
+                    "approved" => {
+                        let _ = self
+                            .approvals
+                            .respond(
+                                &approval_id,
+                                ApprovalResponse {
+                                    execution_process_id: self.execution_process_id,
+                                    status: ApprovalOutcome::Approved,
+                                },
+                            )
+                            .await;
+                        return Ok(approval_id);
+                    }
+                    "denied" => {
+                        let _ = self
+                            .approvals
+                            .respond(
+                                &approval_id,
+                                ApprovalResponse {
+                                    execution_process_id: self.execution_process_id,
+                                    status: ApprovalOutcome::Denied {
+                                        reason: Some(decision.reasoning),
+                                    },
+                                },
+                            )
+                            .await;
+                        return Ok(approval_id);
+                    }
+                    _ => {}
+                },
+                Err(err) => {
+                    tracing::warn!(?err, "auto-approval supervisor failed; escalating");
+                }
+            }
+        }
 
         self.notification_service
             .notify(&title, &message, workspace_id)

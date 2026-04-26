@@ -52,6 +52,7 @@ pub struct AutoApprovalLogEntry {
     pub decided_at: DateTime<Utc>,
     pub resolved_decision: Option<String>,
     pub resolved_at: Option<DateTime<Utc>>,
+    pub approval_id: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]

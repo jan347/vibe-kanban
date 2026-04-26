@@ -15,18 +15,6 @@ use uuid::Uuid;
 
 use crate::{DeploymentImpl, error::ApiError};
 
-const SAFETY_SELECT: &str = r#"SELECT id AS "id!: Uuid", workspace_id AS "workspace_id?: Uuid",
-    scope, require_human_approval AS "require_human_approval!: bool",
-    max_concurrent_dispatch AS "max_concurrent_dispatch!: i64",
-    max_daily_dispatch AS "max_daily_dispatch!: i64",
-    cooldown_seconds AS "cooldown_seconds!: i64",
-    auto_approval_enabled AS "auto_approval_enabled!: bool",
-    auto_approval_policy,
-    auto_approval_model_preset_id AS "auto_approval_model_preset_id?: Uuid",
-    created_at AS "created_at!: chrono::DateTime<chrono::Utc>",
-    updated_at AS "updated_at!: chrono::DateTime<chrono::Utc>"
-    FROM safety_config"#;
-
 pub async fn get_global_config(
     State(deployment): State<DeploymentImpl>,
 ) -> Result<ResponseJson<ApiResponse<SafetyConfig>>, ApiError> {
@@ -47,7 +35,6 @@ pub async fn get_global_config(
     )
     .fetch_one(pool)
     .await?;
-    let _ = SAFETY_SELECT;
     Ok(ResponseJson(ApiResponse::success(row)))
 }
 
@@ -157,46 +144,14 @@ pub async fn auto_approve(
     ResponseJson(payload): ResponseJson<AutoApprovalRequest>,
 ) -> Result<ResponseJson<ApiResponse<AutoApprovalDecision>>, ApiError> {
     let pool = &deployment.db().pool;
-
-    let config = sqlx::query_as!(
-        SafetyConfig,
-        r#"SELECT id AS "id!: Uuid", workspace_id AS "workspace_id?: Uuid",
-           scope, require_human_approval AS "require_human_approval!: bool",
-           max_concurrent_dispatch AS "max_concurrent_dispatch!: i64",
-           max_daily_dispatch AS "max_daily_dispatch!: i64",
-           cooldown_seconds AS "cooldown_seconds!: i64",
-           auto_approval_enabled AS "auto_approval_enabled!: bool",
-           auto_approval_policy,
-           auto_approval_model_preset_id AS "auto_approval_model_preset_id?: Uuid",
-           created_at AS "created_at!: chrono::DateTime<chrono::Utc>",
-           updated_at AS "updated_at!: chrono::DateTime<chrono::Utc>"
-           FROM safety_config
-           WHERE (scope = 'workspace' AND workspace_id = ?1) OR scope = 'global'
-           ORDER BY CASE WHEN scope = 'workspace' THEN 0 ELSE 1 END
-           LIMIT 1"#,
+    let decision = services::services::auto_approval::evaluate_and_log(
+        pool,
         payload.workspace_id,
+        &payload.action_kind,
+        &payload.action_summary,
+        None,
     )
-    .fetch_one(pool)
     .await?;
-
-    let decision = services::services::auto_approval::evaluate(&config, &payload);
-
-    let id = Uuid::new_v4();
-    sqlx::query!(
-        r#"INSERT INTO auto_approval_log
-           (id, workspace_id, action_kind, action_summary, decision, reasoning, decided_by)
-           VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)"#,
-        id,
-        payload.workspace_id,
-        payload.action_kind,
-        payload.action_summary,
-        decision.decision,
-        decision.reasoning,
-        decision.decided_by,
-    )
-    .execute(pool)
-    .await?;
-
     Ok(ResponseJson(ApiResponse::success(decision)))
 }
 
@@ -220,7 +175,8 @@ pub async fn list_auto_approval_log(
                    action_kind, action_summary, decision, reasoning, decided_by,
                    decided_at AS "decided_at!: chrono::DateTime<chrono::Utc>",
                    resolved_decision,
-                   resolved_at AS "resolved_at?: chrono::DateTime<chrono::Utc>"
+                   resolved_at AS "resolved_at?: chrono::DateTime<chrono::Utc>",
+                   approval_id
                    FROM auto_approval_log
                    WHERE workspace_id = ?1 AND decision = 'escalated' AND resolved_decision IS NULL
                    ORDER BY decided_at DESC LIMIT 200"#,
@@ -236,7 +192,8 @@ pub async fn list_auto_approval_log(
                    action_kind, action_summary, decision, reasoning, decided_by,
                    decided_at AS "decided_at!: chrono::DateTime<chrono::Utc>",
                    resolved_decision,
-                   resolved_at AS "resolved_at?: chrono::DateTime<chrono::Utc>"
+                   resolved_at AS "resolved_at?: chrono::DateTime<chrono::Utc>",
+                   approval_id
                    FROM auto_approval_log WHERE workspace_id = ?1
                    ORDER BY decided_at DESC LIMIT 200"#,
                 ws
@@ -251,7 +208,8 @@ pub async fn list_auto_approval_log(
                    action_kind, action_summary, decision, reasoning, decided_by,
                    decided_at AS "decided_at!: chrono::DateTime<chrono::Utc>",
                    resolved_decision,
-                   resolved_at AS "resolved_at?: chrono::DateTime<chrono::Utc>"
+                   resolved_at AS "resolved_at?: chrono::DateTime<chrono::Utc>",
+                   approval_id
                    FROM auto_approval_log
                    WHERE decision = 'escalated' AND resolved_decision IS NULL
                    ORDER BY decided_at DESC LIMIT 200"#
@@ -266,7 +224,8 @@ pub async fn list_auto_approval_log(
                    action_kind, action_summary, decision, reasoning, decided_by,
                    decided_at AS "decided_at!: chrono::DateTime<chrono::Utc>",
                    resolved_decision,
-                   resolved_at AS "resolved_at?: chrono::DateTime<chrono::Utc>"
+                   resolved_at AS "resolved_at?: chrono::DateTime<chrono::Utc>",
+                   approval_id
                    FROM auto_approval_log
                    ORDER BY decided_at DESC LIMIT 200"#
             )
@@ -308,12 +267,37 @@ pub async fn resolve_auto_approval(
            action_kind, action_summary, decision, reasoning, decided_by,
            decided_at AS "decided_at!: chrono::DateTime<chrono::Utc>",
            resolved_decision,
-           resolved_at AS "resolved_at?: chrono::DateTime<chrono::Utc>"
+           resolved_at AS "resolved_at?: chrono::DateTime<chrono::Utc>",
+           approval_id
            FROM auto_approval_log WHERE id = ?1"#,
         id
     )
     .fetch_one(pool)
     .await?;
+
+    if let Some(approval_id) = row.approval_id.as_deref() {
+        let outcome = if payload.decision == "approved" {
+            utils::approvals::ApprovalOutcome::Approved
+        } else {
+            utils::approvals::ApprovalOutcome::Denied {
+                reason: Some("denied via auto-approval console".to_string()),
+            }
+        };
+        // Approvals::respond looks up execution_process_id from the
+        // pending entry — the value supplied here is only echoed back
+        // to analytics, so a placeholder is fine.
+        let _ = deployment
+            .approvals()
+            .respond(
+                approval_id,
+                utils::approvals::ApprovalResponse {
+                    execution_process_id: Uuid::nil(),
+                    status: outcome,
+                },
+            )
+            .await;
+    }
+
     Ok(ResponseJson(ApiResponse::success(row)))
 }
 

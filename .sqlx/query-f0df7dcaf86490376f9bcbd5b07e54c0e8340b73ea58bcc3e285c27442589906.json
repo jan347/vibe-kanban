@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT id AS \"id!: Uuid\", workspace_id AS \"workspace_id!: Uuid\",\n                   action_kind, action_summary, decision, reasoning, decided_by,\n                   decided_at AS \"decided_at!: chrono::DateTime<chrono::Utc>\",\n                   resolved_decision,\n                   resolved_at AS \"resolved_at?: chrono::DateTime<chrono::Utc>\"\n                   FROM auto_approval_log WHERE workspace_id = ?1\n                   ORDER BY decided_at DESC LIMIT 200",
+  "query": "SELECT id AS \"id!: Uuid\", workspace_id AS \"workspace_id!: Uuid\",\n                   action_kind, action_summary, decision, reasoning, decided_by,\n                   decided_at AS \"decided_at!: chrono::DateTime<chrono::Utc>\",\n                   resolved_decision,\n                   resolved_at AS \"resolved_at?: chrono::DateTime<chrono::Utc>\",\n                   approval_id\n                   FROM auto_approval_log\n                   ORDER BY decided_at DESC LIMIT 200",
   "describe": {
     "columns": [
       {
@@ -52,10 +52,15 @@
         "name": "resolved_at?: chrono::DateTime<chrono::Utc>",
         "ordinal": 9,
         "type_info": "Text"
+      },
+      {
+        "name": "approval_id",
+        "ordinal": 10,
+        "type_info": "Text"
       }
     ],
     "parameters": {
-      "Right": 1
+      "Right": 0
     },
     "nullable": [
       true,
@@ -67,8 +72,9 @@
       false,
       false,
       true,
+      true,
       true
     ]
   },
-  "hash": "ecd06818e776fb86a261a4d930a17d87ac4644b548d670eff613d0acb224484e"
+  "hash": "f0df7dcaf86490376f9bcbd5b07e54c0e8340b73ea58bcc3e285c27442589906"
 }
