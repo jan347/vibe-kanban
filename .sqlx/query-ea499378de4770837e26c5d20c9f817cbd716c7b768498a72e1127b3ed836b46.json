@@ -1,0 +1,38 @@
+{
+  "db_name": "SQLite",
+  "query": "\n        SELECT\n            work_item_id AS \"work_item_id!: Uuid\",\n            workspace_id AS \"workspace_id!: Uuid\",\n            role,\n            created_at   AS \"created_at!: chrono::DateTime<chrono::Utc>\"\n        FROM work_item_runs\n        WHERE work_item_id = ?1 AND workspace_id = ?2\n        ",
+  "describe": {
+    "columns": [
+      {
+        "name": "work_item_id!: Uuid",
+        "ordinal": 0,
+        "type_info": "Blob"
+      },
+      {
+        "name": "workspace_id!: Uuid",
+        "ordinal": 1,
+        "type_info": "Blob"
+      },
+      {
+        "name": "role",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "created_at!: chrono::DateTime<chrono::Utc>",
+        "ordinal": 3,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": [
+      false,
+      false,
+      true,
+      false
+    ]
+  },
+  "hash": "ea499378de4770837e26c5d20c9f817cbd716c7b768498a72e1127b3ed836b46"
+}

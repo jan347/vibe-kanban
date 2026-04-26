@@ -34,6 +34,7 @@ pub mod ssh_session;
 pub mod tags;
 pub mod terminal;
 pub mod webrtc;
+pub mod work_items;
 pub mod workspaces;
 
 pub fn router(deployment: DeploymentImpl) -> IntoMakeService<Router> {
@@ -53,6 +54,7 @@ pub fn router(deployment: DeploymentImpl) -> IntoMakeService<Router> {
         .merge(mail::router(&deployment))
         .merge(model_presets::router())
         .merge(repo_bundles::router())
+        .merge(work_items::router())
         .merge(scratch::router(&deployment))
         .merge(search::router(&deployment))
         .merge(preview::api_router())

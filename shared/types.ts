@@ -210,6 +210,20 @@ export type CreateRepoBundle = { name: string, description: string | null, repo_
 
 export type UpdateRepoBundle = { name: string | null, description: string | null, repo_ids: Array<string> | null, default_branch_overrides: { [key in string]?: string } | null, default_preset_id: string | null, };
 
+export type WorkItem = { id: string, title: string, description: string | null, status: WorkItemStatus, priority: bigint, tags_json: string | null, created_at: string, updated_at: string, };
+
+export type WorkItemStatus = "open" | "in_progress" | "blocked" | "done" | "archived";
+
+export type WorkItemRun = { work_item_id: string, workspace_id: string, role: string | null, created_at: string, };
+
+export type CreateWorkItem = { title: string, description: string | null, status: WorkItemStatus | null, priority: bigint | null, tags_json: string | null, };
+
+export type UpdateWorkItem = { title: string | null, description: string | null, status: WorkItemStatus | null, priority: bigint | null, tags_json: string | null, };
+
+export type LinkWorkspaceToWorkItem = { workspace_id: string, role: string | null, };
+
+export type WorkItemWithLinks = { work_item: WorkItem, linked_runs: Array<WorkItemRun>, };
+
 export type Merge = { "type": "direct" } & DirectMerge | { "type": "pr" } & PrMerge;
 
 export type DirectMerge = { id: string, workspace_id: string, repo_id: string, merge_commit: string, target_branch_name: string, created_at: string, };

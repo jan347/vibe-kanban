@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "\n        INSERT INTO work_items (id, title, description, status, priority, tags_json)\n        VALUES (?1, ?2, ?3, ?4, ?5, ?6)\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 6
+    },
+    "nullable": []
+  },
+  "hash": "f29273250faed88c14080d6f2230fc15680ecadcb2a2eb79e6163df046d609c9"
+}

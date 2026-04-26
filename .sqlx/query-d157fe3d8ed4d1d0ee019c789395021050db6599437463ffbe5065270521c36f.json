@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "\n        UPDATE work_items SET\n            title       = COALESCE(?1, title),\n            description = COALESCE(?2, description),\n            status      = COALESCE(?3, status),\n            priority    = COALESCE(?4, priority),\n            tags_json   = COALESCE(?5, tags_json),\n            updated_at  = ?6\n        WHERE id = ?7\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 7
+    },
+    "nullable": []
+  },
+  "hash": "d157fe3d8ed4d1d0ee019c789395021050db6599437463ffbe5065270521c36f"
+}

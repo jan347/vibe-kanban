@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "DELETE FROM work_item_runs WHERE work_item_id = ?1 AND workspace_id = ?2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "8b46feeb49f42780aea099fd6bd7370e8cdb5598584241a557b6f62f43f48d01"
+}
