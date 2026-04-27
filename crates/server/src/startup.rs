@@ -7,104 +7,55 @@ use std::{
 use deployment::{Deployment, DeploymentError};
 use services::services::container::ContainerService;
 use tokio_util::sync::CancellationToken;
-use tower_http::validate_request::ValidateRequestHeaderLayer;
 use utils::assets::asset_dir;
 
-use crate::{
-    DeploymentImpl, middleware::origin::validate_origin, routes, runtime::relay_registration,
-};
+use crate::{DeploymentImpl, routes};
 
 /// A running server instance. Callers can read the port, then call `serve()`
 /// to run the server until the shutdown token is cancelled.
 pub struct ServerHandle {
     pub port: u16,
-    pub proxy_port: u16,
     pub deployment: DeploymentImpl,
     shutdown_token: CancellationToken,
     main_listener: tokio::net::TcpListener,
-    proxy_listener: tokio::net::TcpListener,
 }
 
 impl ServerHandle {
-    /// The base URL the main server is listening on.
-    ///
-    /// Uses `localhost` rather than `127.0.0.1` so that macOS ATS
-    /// (App Transport Security) exception domains apply correctly in
-    /// the Tauri desktop app — IP address literals aren't reliably
-    /// matched by ATS, which causes WebSocket connections to fail.
     pub fn url(&self) -> String {
         format!("http://localhost:{}", self.port)
     }
 
-    /// Run both the main and proxy servers until the shutdown token is cancelled.
     pub async fn serve(self) -> anyhow::Result<()> {
-        // Start relay tunnel so the host registers with the relay server.
-        // This must happen after the port is known (it's needed for local
-        // proxying) and is shared between the standalone binary and Tauri.
-        self.deployment
-            .client_info()
-            .set_server_addr(self.main_listener.local_addr()?)
-            .expect("client server address already set");
-        self.deployment
-            .client_info()
-            .set_preview_proxy_port(self.proxy_port)
-            .expect("client preview proxy port already set");
-        relay_registration::spawn_relay(&self.deployment).await;
-
         let app_router = routes::router(self.deployment.clone());
-        let proxy_router: axum::Router = routes::preview::subdomain_router(self.deployment.clone())
-            .layer(ValidateRequestHeaderLayer::custom(validate_origin));
 
         let main_shutdown = self.shutdown_token.clone();
-        let proxy_shutdown = self.shutdown_token.clone();
 
         let main_server = axum::serve(self.main_listener, app_router)
             .with_graceful_shutdown(async move { main_shutdown.cancelled().await });
-        let proxy_server = axum::serve(self.proxy_listener, proxy_router)
-            .with_graceful_shutdown(async move { proxy_shutdown.cancelled().await });
 
         let main_handle = tokio::spawn(async move {
             if let Err(e) = main_server.await {
                 tracing::error!("Main server error: {}", e);
             }
         });
-        let proxy_handle = tokio::spawn(async move {
-            if let Err(e) = proxy_server.await {
-                tracing::error!("Preview proxy error: {}", e);
-            }
-        });
 
-        tokio::select! {
-            _ = main_handle => {}
-            _ = proxy_handle => {}
-        }
+        let _ = main_handle.await;
 
         perform_cleanup_actions(&self.deployment).await;
         Ok(())
     }
 
-    /// Return a clone of the shutdown token. Cancel it to stop `serve()`.
     pub fn shutdown_token(&self) -> CancellationToken {
         self.shutdown_token.clone()
     }
 }
 
-/// Initialize the deployment, bind listeners on `localhost` with OS-assigned
-/// ports, and return a handle that is ready to serve.
-///
-/// Uses `localhost` rather than `127.0.0.1` so the bind address matches
-/// the hostname the frontend connects to. On modern macOS, `localhost`
-/// resolves to `::1` (IPv6) first — binding to `127.0.0.1` (IPv4) while
-/// the browser connects via `::1` causes "connection refused".
 pub async fn start() -> anyhow::Result<ServerHandle> {
-    start_with_bind("localhost:0", "localhost:0", CancellationToken::new()).await
+    start_with_bind("localhost:0", CancellationToken::new()).await
 }
 
-/// Like [`start`], but lets the caller specify the bind addresses for the main
-/// server and the preview proxy (e.g. `"0.0.0.0:8080"`).
 pub async fn start_with_bind(
     main_addr: &str,
-    proxy_addr: &str,
     shutdown_token: CancellationToken,
 ) -> anyhow::Result<ServerHandle> {
     let deployment = initialize_deployment(shutdown_token.clone()).await?;
@@ -112,27 +63,19 @@ pub async fn start_with_bind(
     let listener = tokio::net::TcpListener::bind(main_addr).await?;
     let port = listener.local_addr()?.port();
 
-    let proxy_listener = tokio::net::TcpListener::bind(proxy_addr).await?;
-    let proxy_port = proxy_listener.local_addr()?.port();
-
-    tracing::info!("Server on :{port}, Preview proxy on :{proxy_port}");
+    tracing::info!("Server on :{port}");
 
     Ok(ServerHandle {
         port,
-        proxy_port,
         deployment,
         shutdown_token,
         main_listener: listener,
-        proxy_listener,
     })
 }
 
-/// Initialize the deployment: create asset directory, run migrations, backfill data,
-/// and pre-warm caches. Shared between the standalone server and the Tauri app.
 pub async fn initialize_deployment(
     shutdown: CancellationToken,
 ) -> Result<DeploymentImpl, DeploymentError> {
-    // Create asset directory if it doesn't exist
     if !asset_dir().exists() {
         std::fs::create_dir_all(asset_dir()).map_err(|e| {
             DeploymentError::Other(anyhow::anyhow!("Failed to create asset directory: {}", e))
@@ -174,7 +117,6 @@ pub async fn initialize_deployment(
         .track_if_analytics_allowed("session_start", serde_json::json!({}))
         .await;
 
-    // Preload global executor options cache for all executors with DEFAULT presets
     tokio::spawn(async move {
         executors::executors::utils::preload_global_executor_options_cache().await;
     });
@@ -182,7 +124,6 @@ pub async fn initialize_deployment(
     Ok(deployment)
 }
 
-/// Gracefully shut down running execution processes.
 pub async fn perform_cleanup_actions(deployment: &DeploymentImpl) {
     deployment
         .container()
@@ -418,57 +359,4 @@ fn remove_empty_dir_tree(path: &Path) -> io::Result<()> {
     }
 
     Ok(())
-}
-
-#[cfg(test)]
-mod tests {
-    use tempfile::TempDir;
-
-    use super::*;
-
-    #[test]
-    fn migrates_legacy_cache_directory_contents() {
-        let temp_dir = TempDir::new().unwrap();
-        let src = temp_dir.path().join("images");
-        let dst = temp_dir.path().join("attachments");
-        fs::create_dir_all(&src).unwrap();
-        fs::write(src.join("asset.png"), b"hello").unwrap();
-
-        let stats = migrate_legacy_directory(&src, &dst, false);
-
-        assert_eq!(stats.moved_files, 1);
-        assert!(dst.join("asset.png").exists());
-        assert!(!src.exists());
-    }
-
-    #[test]
-    fn removes_legacy_duplicates_when_destination_exists() {
-        let temp_dir = TempDir::new().unwrap();
-        let src = temp_dir.path().join(".vibe-images");
-        let dst = temp_dir.path().join(".vibe-attachments");
-        fs::create_dir_all(&src).unwrap();
-        fs::create_dir_all(&dst).unwrap();
-        fs::write(src.join("asset.png"), b"old").unwrap();
-        fs::write(dst.join("asset.png"), b"new").unwrap();
-
-        let stats = migrate_legacy_directory(&src, &dst, true);
-
-        assert_eq!(stats.removed_duplicates, 1);
-        assert_eq!(fs::read(dst.join("asset.png")).unwrap(), b"new");
-        assert!(!src.exists());
-    }
-
-    #[test]
-    fn ensures_gitignore_for_workspace_attachment_dir() {
-        let temp_dir = TempDir::new().unwrap();
-        let src = temp_dir.path().join(".vibe-images");
-        let dst = temp_dir.path().join(".vibe-attachments");
-        fs::create_dir_all(&src).unwrap();
-        fs::write(src.join("file.pdf"), b"attachment").unwrap();
-
-        migrate_legacy_directory(&src, &dst, true);
-
-        assert_eq!(fs::read_to_string(dst.join(".gitignore")).unwrap(), "*\n");
-        assert!(dst.join("file.pdf").exists());
-    }
 }

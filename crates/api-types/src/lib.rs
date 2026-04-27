@@ -8,7 +8,6 @@
 use serde::{Deserialize, Deserializer};
 
 pub mod attachment;
-pub mod auth;
 pub mod blob;
 pub mod export;
 pub mod issue;
@@ -19,9 +18,6 @@ pub mod issue_follower;
 pub mod issue_relationship;
 pub mod issue_tag;
 pub mod notification;
-pub mod oauth;
-pub mod organization_member;
-pub mod organizations;
 pub mod project;
 pub mod project_status;
 pub mod pull_request;
@@ -33,7 +29,6 @@ pub mod workspace;
 pub mod workspaces;
 
 pub use attachment::*;
-pub use auth::*;
 pub use blob::*;
 pub use export::*;
 pub use issue::*;
@@ -44,9 +39,6 @@ pub use issue_follower::*;
 pub use issue_relationship::*;
 pub use issue_tag::*;
 pub use notification::*;
-pub use oauth::*;
-pub use organization_member::*;
-pub use organizations::*;
 pub use project::*;
 pub use project_status::*;
 pub use pull_request::*;

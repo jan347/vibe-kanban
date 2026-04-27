@@ -1,15 +1,11 @@
 use anyhow::{self, Error as AnyhowError};
-use axum::Router;
 use deployment::{Deployment, DeploymentError};
-use server::{
-    DeploymentImpl, middleware::origin::validate_origin, routes, runtime::relay_registration,
-};
+use server::{DeploymentImpl, routes};
 use services::services::container::ContainerService;
 use sqlx::Error as SqlxError;
 use strip_ansi_escapes::strip;
 use thiserror::Error;
 use tokio_util::sync::CancellationToken;
-use tower_http::validate_request::ValidateRequestHeaderLayer;
 use tracing_subscriber::{EnvFilter, prelude::*};
 use utils::{
     assets::asset_dir,
@@ -31,7 +27,6 @@ pub enum GenCapControlRoomError {
 
 #[tokio::main]
 async fn main() -> Result<(), GenCapControlRoomError> {
-    // Install rustls crypto provider before any TLS operations
     rustls::crypto::aws_lc_rs::default_provider()
         .install_default()
         .expect("Failed to install rustls crypto provider");
@@ -40,7 +35,7 @@ async fn main() -> Result<(), GenCapControlRoomError> {
 
     let log_level = std::env::var("RUST_LOG").unwrap_or_else(|_| "info".to_string());
     let filter_string = format!(
-        "warn,server={level},services={level},db={level},executors={level},deployment={level},local_deployment={level},utils={level},embedded_ssh={level},desktop_bridge={level},relay_hosts={level},relay_client={level},relay_webrtc={level},codex_core=off",
+        "warn,server={level},services={level},db={level},executors={level},deployment={level},local_deployment={level},utils={level},codex_core=off",
         level = log_level
     );
     let env_filter = EnvFilter::try_new(filter_string).expect("Failed to create tracing filter");
@@ -49,7 +44,6 @@ async fn main() -> Result<(), GenCapControlRoomError> {
         .with(sentry_layer())
         .init();
 
-    // Create asset directory if it doesn't exist
     if !asset_dir().exists() {
         std::fs::create_dir_all(asset_dir())?;
     }
@@ -89,7 +83,6 @@ async fn main() -> Result<(), GenCapControlRoomError> {
     deployment
         .track_if_analytics_allowed("session_start", serde_json::json!({}))
         .await;
-    // Preload global executor options cache for all executors with DEFAULT presets
     tokio::spawn(async move {
         executors::executors::utils::preload_global_executor_options_cache().await;
     });
@@ -97,7 +90,6 @@ async fn main() -> Result<(), GenCapControlRoomError> {
         .or_else(|_| std::env::var("PORT"))
         .ok()
         .and_then(|s| {
-            // Remove any ANSI codes, then turn into String
             let cleaned =
                 String::from_utf8(strip(s.as_bytes())).expect("UTF-8 after stripping ANSI");
             cleaned.trim().parse::<u16>().ok()
@@ -105,43 +97,21 @@ async fn main() -> Result<(), GenCapControlRoomError> {
         .unwrap_or_else(|| {
             tracing::info!("No PORT environment variable set, using port 0 for auto-assignment");
             0
-        }); // Use 0 to find free port if no specific port provided
-
-    let proxy_port = std::env::var("PREVIEW_PROXY_PORT")
-        .ok()
-        .and_then(|s| s.trim().parse::<u16>().ok())
-        .unwrap_or(0);
+        });
 
     let host = std::env::var("HOST").unwrap_or_else(|_| "127.0.0.1".to_string());
 
     let main_listener = tokio::net::TcpListener::bind(format!("{host}:{port}")).await?;
     let actual_main_port = main_listener.local_addr()?.port();
 
-    let proxy_listener = tokio::net::TcpListener::bind(format!("{host}:{proxy_port}")).await?;
-    let actual_proxy_port = proxy_listener.local_addr()?.port();
-
-    if let Err(e) = write_port_file_with_proxy(actual_main_port, Some(actual_proxy_port)).await {
+    if let Err(e) = write_port_file_with_proxy(actual_main_port, None).await {
         tracing::warn!("Failed to write port file: {}", e);
     }
 
-    tracing::info!(
-        "Main server on :{}, Preview proxy on :{}",
-        actual_main_port,
-        actual_proxy_port
-    );
-
-    deployment
-        .client_info()
-        .set_server_addr(main_listener.local_addr()?)
-        .expect("client server address already set");
-    deployment
-        .client_info()
-        .set_preview_proxy_port(actual_proxy_port)
-        .expect("client preview proxy port already set");
+    tracing::info!("Main server on :{}", actual_main_port);
 
     let app_router = routes::router(deployment.clone());
 
-    // Production only: open browser
     if !cfg!(debug_assertions) {
         tracing::info!("Opening browser...");
         let browser_port = actual_main_port;
@@ -158,36 +128,22 @@ async fn main() -> Result<(), GenCapControlRoomError> {
         });
     }
 
-    let proxy_router: Router = routes::preview::subdomain_router(deployment.clone())
-        .layer(ValidateRequestHeaderLayer::custom(validate_origin));
-
     let main_shutdown = shutdown_token.clone();
-    let proxy_shutdown = shutdown_token.clone();
 
     let main_server = axum::serve(main_listener, app_router)
         .with_graceful_shutdown(async move { main_shutdown.cancelled().await });
-    let proxy_server = axum::serve(proxy_listener, proxy_router)
-        .with_graceful_shutdown(async move { proxy_shutdown.cancelled().await });
 
     let main_handle = tokio::spawn(async move {
         if let Err(e) = main_server.await {
             tracing::error!("Main server error: {}", e);
         }
     });
-    let proxy_handle = tokio::spawn(async move {
-        if let Err(e) = proxy_server.await {
-            tracing::error!("Preview proxy error: {}", e);
-        }
-    });
-
-    relay_registration::spawn_relay(&deployment).await;
 
     tokio::select! {
         _ = shutdown_signal() => {
             tracing::info!("Shutdown signal received");
         }
         _ = main_handle => {}
-        _ = proxy_handle => {}
     }
 
     shutdown_token.cancel();
@@ -198,7 +154,6 @@ async fn main() -> Result<(), GenCapControlRoomError> {
 }
 
 pub async fn shutdown_signal() {
-    // Always wait for Ctrl+C
     let ctrl_c = async {
         if let Err(e) = tokio::signal::ctrl_c().await {
             tracing::error!("Failed to install Ctrl+C handler: {e}");
@@ -209,13 +164,11 @@ pub async fn shutdown_signal() {
     {
         use tokio::signal::unix::{SignalKind, signal};
 
-        // Try to install SIGTERM handler, but don't panic if it fails
         let terminate = async {
             if let Ok(mut sigterm) = signal(SignalKind::terminate()) {
                 sigterm.recv().await;
             } else {
                 tracing::error!("Failed to install SIGTERM handler");
-                // Fallback: never resolves
                 std::future::pending::<()>().await;
             }
         };
@@ -228,7 +181,6 @@ pub async fn shutdown_signal() {
 
     #[cfg(not(unix))]
     {
-        // Only ctrl_c is available, so just await it
         ctrl_c.await;
     }
 }
