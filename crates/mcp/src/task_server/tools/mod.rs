@@ -270,21 +270,6 @@ impl McpServer {
         ))
     }
 
-    // Resolves an organization_id from an explicit parameter or falls back to context.
-    fn resolve_organization_id(&self, explicit: Option<Uuid>) -> Result<Uuid, ToolError> {
-        if let Some(id) = explicit {
-            return Ok(id);
-        }
-        if let Some(ctx) = &self.context
-            && let Some(id) = ctx.organization_id
-        {
-            return Ok(id);
-        }
-        Err(ToolError::message(
-            "organization_id is required (not available from workspace context)",
-        ))
-    }
-
     // Fetches project statuses for a project.
     async fn fetch_project_statuses(
         &self,

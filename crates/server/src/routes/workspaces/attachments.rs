@@ -57,12 +57,6 @@ pub struct ImportIssueAttachmentsResponse {
     pub attachment_ids: Vec<Uuid>,
 }
 
-#[derive(Debug, Clone)]
-pub(crate) struct ImportedIssueAttachment {
-    pub attachment_id: Uuid,
-    pub file: File,
-}
-
 pub async fn get_workspace_files(
     Extension(workspace): Extension<Workspace>,
     State(deployment): State<DeploymentImpl>,
