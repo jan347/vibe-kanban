@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT id AS \"id!: Uuid\",\n           workspace_id AS \"workspace_id!: Uuid\",\n           work_item_id AS \"work_item_id!: Uuid\",\n           trigger_config,\n           prompt_template_id AS \"prompt_template_id?: Uuid\",\n           model_preset_id AS \"model_preset_id?: Uuid\",\n           prompt_override,\n           last_fired_at AS \"last_fired_at?: chrono::DateTime<chrono::Utc>\"\n           FROM automation_rules\n           WHERE enabled = 1 AND trigger_kind = 'schedule'",
+  "query": "SELECT id AS \"id!: Uuid\",\n           workspace_id AS \"workspace_id!: Uuid\",\n           work_item_id AS \"work_item_id!: Uuid\",\n           name,\n           trigger_config,\n           prompt_template_id AS \"prompt_template_id?: Uuid\",\n           model_preset_id AS \"model_preset_id?: Uuid\",\n           prompt_override,\n           last_fired_at AS \"last_fired_at?: chrono::DateTime<chrono::Utc>\"\n           FROM automation_rules\n           WHERE enabled = 1 AND trigger_kind = 'schedule'",
   "describe": {
     "columns": [
       {
@@ -19,28 +19,33 @@
         "type_info": "Blob"
       },
       {
-        "name": "trigger_config",
+        "name": "name",
         "ordinal": 3,
         "type_info": "Text"
       },
       {
-        "name": "prompt_template_id?: Uuid",
+        "name": "trigger_config",
         "ordinal": 4,
-        "type_info": "Blob"
+        "type_info": "Text"
       },
       {
-        "name": "model_preset_id?: Uuid",
+        "name": "prompt_template_id?: Uuid",
         "ordinal": 5,
         "type_info": "Blob"
       },
       {
-        "name": "prompt_override",
+        "name": "model_preset_id?: Uuid",
         "ordinal": 6,
+        "type_info": "Blob"
+      },
+      {
+        "name": "prompt_override",
+        "ordinal": 7,
         "type_info": "Text"
       },
       {
         "name": "last_fired_at?: chrono::DateTime<chrono::Utc>",
-        "ordinal": 7,
+        "ordinal": 8,
         "type_info": "Text"
       }
     ],
@@ -52,11 +57,12 @@
       false,
       false,
       false,
+      false,
       true,
       true,
       true,
       true
     ]
   },
-  "hash": "57964ec0bfb800c8461e6cd52b39dac6638837bbb625b8ae2d2b8e5cd0c87858"
+  "hash": "a7d6c0e202dcab6edcb90321faaa830a80ac79b5f545df3023d8f8d0c398697a"
 }

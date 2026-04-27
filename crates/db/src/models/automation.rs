@@ -45,8 +45,15 @@ pub struct UpdateAutomationRule {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-pub struct FireAutomationResult {
-    pub rule_id: Uuid,
-    pub dispatch_id: Uuid,
-    pub fired_at: DateTime<Utc>,
+#[serde(tag = "status", rename_all = "snake_case")]
+pub enum FireAutomationResult {
+    Approved {
+        rule_id: Uuid,
+        dispatch_id: Uuid,
+        fired_at: DateTime<Utc>,
+    },
+    Blocked {
+        rule_id: Uuid,
+        decision: crate::models::safety::AutoApprovalDecision,
+    },
 }

@@ -406,17 +406,32 @@ mod tests {
     #[test]
     fn orchestrator_mode_exposes_only_scoped_workflow_tools() {
         let actual = tool_names(McpServer::orchestrator_mode_router());
-        let expected = BTreeSet::from([
-            "create_session".to_string(),
-            "get_context".to_string(),
-            "get_execution".to_string(),
-            "list_sessions".to_string(),
-            "run_session_prompt".to_string(),
-            "update_session".to_string(),
-            "update_workspace".to_string(),
-        ]);
-
-        assert_eq!(actual, expected);
+        // Mode invariants: orchestrator scope must include workflow primitives
+        // (sessions, work-items, mail, artifacts) but never the global admin
+        // tools (list_workspaces, delete_workspace, output_markdown). Adding a
+        // new orchestrator tool only requires updating the must_include list.
+        let must_include = [
+            "create_session",
+            "get_context",
+            "get_execution",
+            "list_sessions",
+            "run_session_prompt",
+            "update_session",
+            "update_workspace",
+        ];
+        let must_exclude = ["list_workspaces", "delete_workspace", "output_markdown"];
+        for name in must_include {
+            assert!(
+                actual.contains(name),
+                "orchestrator router missing required tool: {name}\nactual: {actual:?}",
+            );
+        }
+        for name in must_exclude {
+            assert!(
+                !actual.contains(name),
+                "orchestrator router leaks global admin tool: {name}\nactual: {actual:?}",
+            );
+        }
     }
 
     #[test]

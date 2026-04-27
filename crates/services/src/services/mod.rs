@@ -5,6 +5,7 @@ pub mod automation_runner;
 pub mod config;
 pub mod container;
 pub mod diff_stream;
+pub mod dispatch_guard;
 pub mod events;
 pub mod execution_process;
 pub mod file;

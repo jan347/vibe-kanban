@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT COUNT(*) FROM auto_approval_log\n         WHERE workspace_id = ?1\n           AND decided_at > strftime('%Y-%m-%dT%H:%M:%fZ','now','-60 seconds')",
+  "describe": {
+    "columns": [
+      {
+        "name": "COUNT(*)",
+        "ordinal": 0,
+        "type_info": "Integer"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "5e6ee56fb827561bcfc6ed6496afbecd22e7670b3fb1d23fa8f67ec4bb17ff20"
+}

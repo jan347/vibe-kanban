@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO auto_approval_log\n               (id, workspace_id, action_kind, action_summary, decision, reasoning, decided_by, approval_id)\n               VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 8
+    },
+    "nullable": []
+  },
+  "hash": "24ff8ad2a40f45ad34a0cb78aaa9599d0b7ba6e7eb1997d9d3be3192dc3de077"
+}

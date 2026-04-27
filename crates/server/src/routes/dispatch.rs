@@ -4,13 +4,41 @@ use axum::{
     response::Json as ResponseJson,
     routing::get,
 };
-use db::models::dispatch::{CreateDispatch, DispatchLogEntry, DispatchStatus};
+use db::models::{
+    dispatch::{CreateDispatch, DispatchLogEntry, DispatchStatus},
+    safety::AutoApprovalDecision,
+};
 use deployment::Deployment;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
+use services::services::dispatch_guard::{
+    GatedDispatchError, GatedDispatchResult, gated_create_dispatch,
+};
+use ts_rs::TS;
 use utils::response::ApiResponse;
 use uuid::Uuid;
 
 use crate::{DeploymentImpl, error::ApiError};
+
+/// Create-dispatch returns either the freshly inserted dispatch row OR
+/// the supervisor decision that blocked it. The frontend distinguishes
+/// the two via the `status` field.
+#[derive(Debug, Serialize, Deserialize, TS)]
+#[serde(tag = "status", rename_all = "snake_case")]
+pub enum CreateDispatchResponse {
+    Approved { dispatch: DispatchLogEntry },
+    Blocked { decision: AutoApprovalDecision },
+}
+
+impl From<GatedDispatchError> for ApiError {
+    fn from(e: GatedDispatchError) -> Self {
+        match e {
+            GatedDispatchError::WorkspaceNotFound(id) => {
+                ApiError::BadRequest(format!("workspace not found: {id}"))
+            }
+            GatedDispatchError::Db(err) => ApiError::Database(err),
+        }
+    }
+}
 
 #[derive(Deserialize)]
 pub struct DispatchFilter {
@@ -102,32 +130,28 @@ pub async fn list_dispatches(
 pub async fn create_dispatch(
     State(deployment): State<DeploymentImpl>,
     ResponseJson(payload): ResponseJson<CreateDispatch>,
-) -> Result<ResponseJson<ApiResponse<DispatchLogEntry>>, ApiError> {
+) -> Result<ResponseJson<ApiResponse<CreateDispatchResponse>>, ApiError> {
     let pool = &deployment.db().pool;
-    let id = Uuid::new_v4();
-    let status = DispatchStatus::Pending;
-    sqlx::query!(
-        r#"INSERT INTO dispatch_log (id, work_item_id, workspace_id, prompt_text,
-           prompt_template_id, model_preset_id, status)
-           VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)"#,
-        id,
-        payload.work_item_id,
-        payload.workspace_id,
-        payload.prompt_text,
-        payload.prompt_template_id,
-        payload.model_preset_id,
-        status
-    )
-    .execute(pool)
-    .await?;
-    sqlx::query!(
-        "INSERT OR IGNORE INTO work_item_runs (work_item_id, workspace_id, role) VALUES (?1, ?2, 'dispatch')",
-        payload.work_item_id, payload.workspace_id
-    )
-    .execute(pool)
-    .await?;
-    let row = fetch_dispatch(pool, id).await?;
-    Ok(ResponseJson(ApiResponse::success(row)))
+    // Cap prompt size at the boundary so a runaway agent can't write an
+    // arbitrarily large row through the dispatch endpoint.
+    if payload.prompt_text.len() > 64 * 1024 {
+        return Err(ApiError::BadRequest("prompt_text exceeds 64KB".to_string()));
+    }
+    // Summary fed to the supervisor — first line of the prompt is the
+    // signal-rich part; truncate to keep audit logs tidy.
+    let summary: String = payload
+        .prompt_text
+        .lines()
+        .next()
+        .unwrap_or("")
+        .chars()
+        .take(280)
+        .collect();
+    let response = match gated_create_dispatch(pool, &payload, "dispatch", &summary).await? {
+        GatedDispatchResult::Approved(row) => CreateDispatchResponse::Approved { dispatch: row },
+        GatedDispatchResult::Blocked(decision) => CreateDispatchResponse::Blocked { decision },
+    };
+    Ok(ResponseJson(ApiResponse::success(response)))
 }
 
 pub async fn get_dispatch(

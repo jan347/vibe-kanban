@@ -5,15 +5,30 @@ use axum::{
     response::Json as ResponseJson,
     routing::{get, post},
 };
-use db::models::automation::{
-    AutomationRule, CreateAutomationRule, FireAutomationResult, UpdateAutomationRule,
+use db::models::{
+    automation::{
+        AutomationRule, CreateAutomationRule, FireAutomationResult, UpdateAutomationRule,
+    },
+    dispatch::CreateDispatch,
 };
 use deployment::Deployment;
 use serde::Deserialize;
+use services::services::dispatch_guard::{
+    GatedDispatchError, GatedDispatchResult, gated_create_dispatch,
+};
 use utils::response::ApiResponse;
 use uuid::Uuid;
 
 use crate::{DeploymentImpl, error::ApiError};
+
+fn map_gate_err(e: GatedDispatchError) -> ApiError {
+    match e {
+        GatedDispatchError::WorkspaceNotFound(id) => {
+            ApiError::BadRequest(format!("workspace not found: {id}"))
+        }
+        GatedDispatchError::Db(err) => ApiError::Database(err),
+    }
+}
 
 #[derive(Deserialize)]
 pub struct AutomationFilter {
@@ -202,38 +217,49 @@ pub async fn fire_rule(
         ));
     };
 
-    let dispatch_id = Uuid::new_v4();
-    let pending = "pending";
-    sqlx::query!(
-        r#"INSERT INTO dispatch_log
-           (id, work_item_id, workspace_id, prompt_text, prompt_template_id, model_preset_id, status)
-           VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)"#,
-        dispatch_id,
-        rule.work_item_id,
-        rule.workspace_id,
+    // All dispatches — manual fire, scheduled tick, UI submit — flow
+    // through the same chokepoint so an attacker who plants an
+    // automation rule cannot use it to slip past the supervisor.
+    let summary = format!("automation:{} {}", rule.name, prompt_text);
+    let summary: String = summary.chars().take(280).collect();
+    let req = CreateDispatch {
+        work_item_id: rule.work_item_id,
+        workspace_id: rule.workspace_id,
         prompt_text,
-        rule.prompt_template_id,
-        rule.model_preset_id,
-        pending,
-    )
-    .execute(pool)
-    .await?;
-
-    let now = chrono::Utc::now();
-    let now_str = now.format("%Y-%m-%dT%H:%M:%S%.3fZ").to_string();
-    sqlx::query!(
-        "UPDATE automation_rules SET last_fired_at = ?1, updated_at = ?1 WHERE id = ?2",
-        now_str,
-        id,
-    )
-    .execute(pool)
-    .await?;
-
-    Ok(ResponseJson(ApiResponse::success(FireAutomationResult {
-        rule_id: id,
-        dispatch_id,
-        fired_at: now,
-    })))
+        prompt_template_id: rule.prompt_template_id,
+        model_preset_id: rule.model_preset_id,
+    };
+    let result = gated_create_dispatch(pool, &req, "automation_fire", &summary)
+        .await
+        .map_err(map_gate_err)?;
+    match result {
+        GatedDispatchResult::Approved(row) => {
+            // Only persist last_fired_at on success — a blocked attempt
+            // shouldn't pollute the schedule cadence or hide the issue
+            // from the operator.
+            let now_str = row.started_at.format("%Y-%m-%dT%H:%M:%S%.3fZ").to_string();
+            sqlx::query!(
+                "UPDATE automation_rules SET last_fired_at = ?1, updated_at = ?1 WHERE id = ?2",
+                now_str,
+                id,
+            )
+            .execute(pool)
+            .await?;
+            Ok(ResponseJson(ApiResponse::success(
+                FireAutomationResult::Approved {
+                    rule_id: id,
+                    dispatch_id: row.id,
+                    fired_at: row.started_at,
+                },
+            )))
+        }
+        GatedDispatchResult::Blocked(decision) => Ok(ResponseJson(ApiResponse::success(
+            FireAutomationResult::Blocked {
+                rule_id: id,
+                decision,
+            },
+        ))),
+    }
 }
 
 async fn fetch_rule(pool: &sqlx::SqlitePool, id: Uuid) -> Result<AutomationRule, ApiError> {

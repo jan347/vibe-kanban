@@ -285,6 +285,16 @@ pub async fn resolve_auto_approval(
     .fetch_one(pool)
     .await?;
 
+    // Distinguish the two zero-rows-affected cases: already-resolved
+    // (the row exists with a non-null resolved_decision) is a 409, not
+    // a silent 200. The fetch above tells us which case we're in.
+    if !we_resolved && row.resolved_decision.is_some() {
+        return Err(ApiError::Conflict(format!(
+            "auto-approval entry {id} already resolved as '{}'",
+            row.resolved_decision.as_deref().unwrap_or("unknown")
+        )));
+    }
+
     if we_resolved && let Some(approval_id) = row.approval_id.as_deref() {
         let outcome = if payload.decision == "approved" {
             utils::approvals::ApprovalOutcome::Approved
