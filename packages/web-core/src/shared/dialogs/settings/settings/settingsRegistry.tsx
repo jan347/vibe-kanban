@@ -10,16 +10,7 @@ import { ReposSettingsSection } from './ReposSettingsSection';
 import { AgentsSettingsSection } from './AgentsSettingsSection';
 import { McpSettingsSection } from './McpSettingsSection';
 
-export type SettingsSectionType =
-  // TODO(local-first): 'organizations' | 'relay' | 'remote-projects' are kept
-  // as accepted ids so legacy callers compile, but are routed to 'general'.
-  | 'general'
-  | 'repos'
-  | 'agents'
-  | 'mcp'
-  | 'organizations'
-  | 'relay'
-  | 'remote-projects';
+export type SettingsSectionType = 'general' | 'repos' | 'agents' | 'mcp';
 
 export type SettingsSectionGroup = 'host' | 'universal';
 
@@ -28,9 +19,6 @@ export type SettingsSectionInitialState = {
   repos: { repoId?: string } | undefined;
   agents: { executor?: string; variant?: string } | undefined;
   mcp: undefined;
-  organizations: undefined;
-  relay: { hostId?: string } | undefined;
-  'remote-projects': { organizationId?: string } | undefined;
 };
 
 export interface SettingsSectionDefinition {
@@ -73,10 +61,6 @@ export function renderSettingsSection(
       return <AgentsSettingsSection />;
     case 'mcp':
       return <McpSettingsSection />;
-    // TODO(local-first): legacy section ids fall back to general.
-    case 'organizations':
-    case 'relay':
-    case 'remote-projects':
     default:
       return <GeneralSettingsSection />;
   }

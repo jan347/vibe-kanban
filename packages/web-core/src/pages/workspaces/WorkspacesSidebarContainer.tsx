@@ -17,7 +17,6 @@ import {
 } from '@/shared/stores/useUiPreferencesStore';
 import type { Workspace } from '@/shared/hooks/useWorkspaces';
 import { CommandBarDialog } from '@/shared/dialogs/command-bar/CommandBarDialog';
-import { SettingsDialog } from '@/shared/dialogs/settings/SettingsDialog';
 import {
   WorkspacesSidebar,
   type WorkspacesSidebarPersistKeys,
@@ -529,13 +528,6 @@ export function WorkspacesSidebarContainer({
     return remoteCloudHosts.find((host) => host.id === routeHostId) ?? null;
   }, [routeHostId, remoteCloudHosts]);
 
-  const handleOpenRemoteHostSettings = useCallback(() => {
-    void SettingsDialog.show({
-      initialSection: 'relay',
-      ...(routeHostId ? { initialState: { hostId: routeHostId } } : {}),
-    });
-  }, [routeHostId]);
-
   return (
     <WorkspacesSidebar
       workspaces={paginatedActiveWorkspaces}
@@ -560,7 +552,6 @@ export function WorkspacesSidebarContainer({
       onOpenWorkspaceActions={handleOpenWorkspaceActions}
       persistKeys={sidebarPersistKeys}
       activeRemoteHost={activeRemoteHost}
-      onOpenRemoteHostSettings={handleOpenRemoteHostSettings}
     />
   );
 }
