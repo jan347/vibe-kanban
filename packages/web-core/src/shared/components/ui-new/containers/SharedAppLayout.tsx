@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { DropResult } from '@hello-pangea/dnd';
-import { Outlet, useNavigate, useParams } from '@tanstack/react-router';
+import { Outlet, useNavigate } from '@tanstack/react-router';
 import { XIcon, PlusIcon, LayoutIcon, KanbanIcon } from '@phosphor-icons/react';
 import { SyncErrorProvider } from '@/shared/providers/SyncErrorProvider';
 import { useIsMobile } from '@/shared/hooks/useIsMobile';
@@ -55,9 +55,6 @@ export function SharedAppLayout() {
   const restartForUpdate = useAppUpdateStore((s) => s.restart);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isAppBarHovered, setIsAppBarHovered] = useState(false);
-  // routeHostId was used by the deleted Remote section; keep
-  // useParams hook quiet by referencing nothing.
-  useParams({ strict: false });
   const navigate = useNavigate();
 
   // Register CMD+K shortcut globally for all routes under SharedAppLayout
@@ -179,22 +176,15 @@ export function SharedAppLayout() {
   }, [navigate]);
 
   const handleAutomationClick = useCallback(() => {
-    // Routes are registered with `as never` so navigate() can't infer
-    // them; cast through unknown to keep the typed-router happy.
-    void navigate({ to: '/automation' as unknown as '/' });
-  }, [navigate]);
+    appNavigation.goToAutomation();
+  }, [appNavigation]);
 
   const handleMailClick = useCallback(() => {
-    void navigate({ to: '/mail' as unknown as '/' });
-  }, [navigate]);
+    appNavigation.goToMail();
+  }, [appNavigation]);
 
-  // Route-active flags for the new local-first nav. We can't rely on
-  // `currentDestination` here because automation/mail aren't part of
-  // the typed destination union — they're top-level local routes.
-  const currentPath =
-    typeof window !== 'undefined' ? window.location.pathname : '';
-  const isAutomationActive = currentPath.startsWith('/automation');
-  const isMailActive = currentPath.startsWith('/mail');
+  const isAutomationActive = currentDestination?.kind === 'automation';
+  const isMailActive = currentDestination?.kind === 'mail';
 
   const handleProjectClick = useCallback(
     (projectId: string) => {
