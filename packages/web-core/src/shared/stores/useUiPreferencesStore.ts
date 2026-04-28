@@ -209,7 +209,6 @@ export type WorkspaceSortBy = 'updated_at' | 'created_at';
 export type WorkspaceSortOrder = 'asc' | 'desc';
 
 export type WorkspaceFilterState = {
-  projectIds: string[]; // remote project IDs
   prFilter: WorkspacePrFilter;
 };
 
@@ -219,7 +218,6 @@ export type WorkspaceSortState = {
 };
 
 const DEFAULT_WORKSPACE_FILTER_STATE: WorkspaceFilterState = {
-  projectIds: [],
   prFilter: 'all',
 };
 
@@ -422,7 +420,6 @@ type State = {
   ) => void;
 
   // Workspace sidebar filter actions
-  setWorkspaceProjectFilter: (projectIds: string[]) => void;
   setWorkspacePrFilter: (prFilter: WorkspacePrFilter) => void;
   clearWorkspaceFilters: () => void;
   setWorkspaceSortBy: (sortBy: WorkspaceSortBy) => void;
@@ -790,11 +787,6 @@ export const useUiPreferencesStore = create<State>()((set, get) => ({
   },
 
   // Workspace sidebar filter actions
-  setWorkspaceProjectFilter: (projectIds) =>
-    set((s) => ({
-      workspaceFilters: { ...s.workspaceFilters, projectIds },
-    })),
-
   setWorkspacePrFilter: (prFilter) =>
     set((s) => ({
       workspaceFilters: { ...s.workspaceFilters, prFilter },

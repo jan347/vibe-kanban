@@ -74,97 +74,6 @@ function resolveLocalDestinationFromPath(path: string): AppDestination | null {
         ? { kind: 'workspace-vscode', hostId, workspaceId }
         : null;
     }
-    case '/_app/projects/$projectId': {
-      const projectId = getPathParam(routeParams, 'projectId');
-      return projectId ? { kind: 'project', projectId } : null;
-    }
-    case '/_app/projects/$projectId_/issues/$issueId': {
-      const projectId = getPathParam(routeParams, 'projectId');
-      const issueId = getPathParam(routeParams, 'issueId');
-      return projectId && issueId
-        ? { kind: 'project-issue', projectId, issueId }
-        : null;
-    }
-    case '/_app/projects/$projectId_/issues/$issueId_/workspaces/$workspaceId': {
-      const projectId = getPathParam(routeParams, 'projectId');
-      const issueId = getPathParam(routeParams, 'issueId');
-      const workspaceId = getPathParam(routeParams, 'workspaceId');
-      return projectId && issueId && workspaceId
-        ? {
-            kind: 'project-issue-workspace',
-            projectId,
-            issueId,
-            workspaceId,
-          }
-        : null;
-    }
-    case '/_app/projects/$projectId_/issues/$issueId_/hosts/$hostId/workspaces/$workspaceId': {
-      const projectId = getPathParam(routeParams, 'projectId');
-      const issueId = getPathParam(routeParams, 'issueId');
-      const hostId = getPathParam(routeParams, 'hostId');
-      const workspaceId = getPathParam(routeParams, 'workspaceId');
-      return projectId && issueId && hostId && workspaceId
-        ? {
-            kind: 'project-issue-workspace',
-            projectId,
-            issueId,
-            hostId,
-            workspaceId,
-          }
-        : null;
-    }
-    case '/_app/projects/$projectId_/issues/$issueId_/workspaces/create/$draftId': {
-      const projectId = getPathParam(routeParams, 'projectId');
-      const issueId = getPathParam(routeParams, 'issueId');
-      const draftId = getPathParam(routeParams, 'draftId');
-      return projectId && issueId && draftId
-        ? {
-            kind: 'project-issue-workspace-create',
-            projectId,
-            issueId,
-            draftId,
-          }
-        : null;
-    }
-    case '/_app/projects/$projectId_/issues/$issueId_/hosts/$hostId/workspaces/create/$draftId': {
-      const projectId = getPathParam(routeParams, 'projectId');
-      const issueId = getPathParam(routeParams, 'issueId');
-      const hostId = getPathParam(routeParams, 'hostId');
-      const draftId = getPathParam(routeParams, 'draftId');
-      return projectId && issueId && hostId && draftId
-        ? {
-            kind: 'project-issue-workspace-create',
-            projectId,
-            issueId,
-            hostId,
-            draftId,
-          }
-        : null;
-    }
-    case '/_app/projects/$projectId_/workspaces/create/$draftId': {
-      const projectId = getPathParam(routeParams, 'projectId');
-      const draftId = getPathParam(routeParams, 'draftId');
-      return projectId && draftId
-        ? {
-            kind: 'project-workspace-create',
-            projectId,
-            draftId,
-          }
-        : null;
-    }
-    case '/_app/projects/$projectId_/hosts/$hostId/workspaces/create/$draftId': {
-      const projectId = getPathParam(routeParams, 'projectId');
-      const hostId = getPathParam(routeParams, 'hostId');
-      const draftId = getPathParam(routeParams, 'draftId');
-      return projectId && hostId && draftId
-        ? {
-            kind: 'project-workspace-create',
-            projectId,
-            hostId,
-            draftId,
-          }
-        : null;
-    }
     default:
       return null;
   }
@@ -229,77 +138,6 @@ function destinationToLocalTarget(
       return { to: '/automation' } as const;
     case 'mail':
       return { to: '/mail' } as const;
-    case 'project':
-      return {
-        to: '/projects/$projectId',
-        params: { projectId: destination.projectId },
-      } as const;
-    case 'project-issue':
-      return {
-        to: '/projects/$projectId/issues/$issueId',
-        params: {
-          projectId: destination.projectId,
-          issueId: destination.issueId,
-        },
-      } as const;
-    case 'project-issue-workspace':
-      if (effectiveHostId) {
-        return {
-          to: '/projects/$projectId/issues/$issueId/hosts/$hostId/workspaces/$workspaceId',
-          params: {
-            projectId: destination.projectId,
-            issueId: destination.issueId,
-            hostId: effectiveHostId,
-            workspaceId: destination.workspaceId,
-          },
-        } as const;
-      }
-      return {
-        to: '/projects/$projectId/issues/$issueId/workspaces/$workspaceId',
-        params: {
-          projectId: destination.projectId,
-          issueId: destination.issueId,
-          workspaceId: destination.workspaceId,
-        },
-      } as const;
-    case 'project-issue-workspace-create':
-      if (effectiveHostId) {
-        return {
-          to: '/projects/$projectId/issues/$issueId/hosts/$hostId/workspaces/create/$draftId',
-          params: {
-            projectId: destination.projectId,
-            issueId: destination.issueId,
-            hostId: effectiveHostId,
-            draftId: destination.draftId,
-          },
-        } as const;
-      }
-      return {
-        to: '/projects/$projectId/issues/$issueId/workspaces/create/$draftId',
-        params: {
-          projectId: destination.projectId,
-          issueId: destination.issueId,
-          draftId: destination.draftId,
-        },
-      } as const;
-    case 'project-workspace-create':
-      if (effectiveHostId) {
-        return {
-          to: '/projects/$projectId/hosts/$hostId/workspaces/create/$draftId',
-          params: {
-            projectId: destination.projectId,
-            hostId: effectiveHostId,
-            draftId: destination.draftId,
-          },
-        } as const;
-      }
-      return {
-        to: '/projects/$projectId/workspaces/create/$draftId',
-        params: {
-          projectId: destination.projectId,
-          draftId: destination.draftId,
-        },
-      } as const;
   }
 }
 
@@ -335,30 +173,6 @@ export function createLocalAppNavigation(): AppNavigation {
     goToAutomation: (transition) =>
       navigateTo({ kind: 'automation' }, transition),
     goToMail: (transition) => navigateTo({ kind: 'mail' }, transition),
-    goToProject: (projectId, transition) =>
-      navigateTo({ kind: 'project', projectId }, transition),
-    goToProjectIssue: (projectId, issueId, transition) =>
-      navigateTo({ kind: 'project-issue', projectId, issueId }, transition),
-    goToProjectIssueWorkspace: (projectId, issueId, workspaceId, transition) =>
-      navigateTo(
-        { kind: 'project-issue-workspace', projectId, issueId, workspaceId },
-        transition
-      ),
-    goToProjectIssueWorkspaceCreate: (
-      projectId,
-      issueId,
-      draftId,
-      transition
-    ) =>
-      navigateTo(
-        { kind: 'project-issue-workspace-create', projectId, issueId, draftId },
-        transition
-      ),
-    goToProjectWorkspaceCreate: (projectId, draftId, transition) =>
-      navigateTo(
-        { kind: 'project-workspace-create', projectId, draftId },
-        transition
-      ),
   };
 
   return navigation;

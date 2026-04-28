@@ -74,7 +74,7 @@ function storeToScratchData(state: {
     is_terminal_visible: state.isTerminalVisible,
     workspace_panel_states: workspacePanelStates,
     workspace_filters: {
-      project_ids: state.workspaceFilters.projectIds,
+      project_ids: [],
       pr_filter: state.workspaceFilters.prFilter,
     },
     workspace_sort: {
@@ -157,7 +157,6 @@ function scratchDataToStore(data: UiPreferencesData): {
     isTerminalVisible: data.is_terminal_visible ?? true,
     workspacePanelStates,
     workspaceFilters: {
-      projectIds: data.workspace_filters?.project_ids ?? [],
       prFilter:
         (data.workspace_filters?.pr_filter as WorkspacePrFilter) ?? 'all',
     },

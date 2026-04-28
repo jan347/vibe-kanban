@@ -8,7 +8,6 @@ import WYSIWYGEditor from '@/shared/components/WYSIWYGEditor';
 import { useCreateWorkspace } from '@/shared/hooks/useCreateWorkspace';
 import { useCreateAttachments } from '@/shared/hooks/useCreateAttachments';
 import { useExecutorConfig } from '@/shared/hooks/useExecutorConfig';
-import { saveProjectRepoDefaults } from '@/shared/hooks/useProjectRepoDefaults';
 import { getSortedExecutorVariantKeys } from '@/shared/lib/executor';
 import {
   toPrettyCase,
@@ -256,12 +255,6 @@ export function CreateChatBoxContainer({
 
     if (result.workspace) {
       onWorkspaceCreated(result.workspace.id);
-    }
-
-    if (linkedIssue?.remoteProjectId) {
-      saveProjectRepoDefaults(linkedIssue.remoteProjectId, data.repos).catch(
-        (err) => console.warn('Failed to save project repo defaults:', err)
-      );
     }
 
     clearAttachments();

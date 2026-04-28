@@ -1,43 +1,17 @@
-import {
-  DragDropContext,
-  Draggable,
-  Droppable,
-  type DropResult,
-} from '@hello-pangea/dnd';
 import type { ReactNode } from 'react';
 import {
   LayoutIcon,
   EnvelopeIcon,
   RobotIcon,
-  PlusIcon,
-  SpinnerIcon,
   type Icon,
 } from '@phosphor-icons/react';
 import { cn } from '../lib/cn';
 import { Tooltip } from './Tooltip';
 
-function getProjectInitials(name: string): string {
-  const trimmed = name.trim();
-  if (!trimmed) return '??';
-
-  const words = trimmed.split(/\s+/);
-  if (words.length >= 2) {
-    return (words[0].charAt(0) + words[1].charAt(0)).toUpperCase();
-  }
-  return trimmed.slice(0, 2).toUpperCase();
-}
-
 interface AppBarProps {
-  projects: AppBarProject[];
-  onCreateProject: () => void;
   onWorkspacesClick: () => void;
   showWorkspacesButton?: boolean;
-  onProjectClick: (projectId: string) => void;
-  onProjectsDragEnd: (result: DropResult) => void;
-  isSavingProjectOrder?: boolean;
   isWorkspacesActive: boolean;
-  activeProjectId: string | null;
-  isLoadingProjects?: boolean;
   onHoverStart?: () => void;
   onHoverEnd?: () => void;
   notificationBell?: ReactNode;
@@ -49,12 +23,6 @@ interface AppBarProps {
   isAutomationActive?: boolean;
   onMailClick?: () => void;
   isMailActive?: boolean;
-}
-
-export interface AppBarProject {
-  id: string;
-  name: string;
-  color: string;
 }
 
 // Retained as a re-exported type so WorkspacesSidebar / SharedAppLayout
@@ -75,35 +43,21 @@ const appBarItemBaseClassName =
   'flex items-center justify-center w-10 h-10 rounded-lg text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand';
 
 type AppBarSection = {
-  key: 'local' | 'projects';
+  key: 'local';
   label: string;
   items: AppBarSectionItem[];
 };
 
-type AppBarSectionItem =
-  | {
-      key: string;
-      kind: 'icon-button';
-      label: string;
-      icon: Icon;
-      isActive?: boolean;
-      onClick?: () => void;
-      className?: string;
-      wrapperClassName?: string;
-    }
-  | {
-      key: string;
-      kind: 'loading';
-    }
-  | {
-      key: string;
-      kind: 'project-list';
-      projects: AppBarProject[];
-      activeProjectId: string | null;
-      isSavingProjectOrder?: boolean;
-      onProjectClick: (projectId: string) => void;
-      onProjectsDragEnd: (result: DropResult) => void;
-    };
+type AppBarSectionItem = {
+  key: string;
+  kind: 'icon-button';
+  label: string;
+  icon: Icon;
+  isActive?: boolean;
+  onClick?: () => void;
+  className?: string;
+  wrapperClassName?: string;
+};
 
 function getStandardAppBarButtonClassName({
   isActive = false,
@@ -123,16 +77,9 @@ function getStandardAppBarButtonClassName({
 }
 
 export function AppBar({
-  projects,
-  onCreateProject,
   onWorkspacesClick,
   showWorkspacesButton = true,
-  onProjectClick,
-  onProjectsDragEnd,
-  isSavingProjectOrder,
   isWorkspacesActive,
-  activeProjectId,
-  isLoadingProjects,
   onHoverStart,
   onHoverEnd,
   notificationBell,
@@ -180,131 +127,22 @@ export function AppBar({
     sections.push({ key: 'local', label: 'Local', items: localItems });
   }
 
-  const projectSectionItems: AppBarSectionItem[] = [];
-
-  if (isLoadingProjects) {
-    projectSectionItems.push({ key: 'projects-loading', kind: 'loading' });
-  }
-
-  if (projects.length > 0) {
-    projectSectionItems.push({
-      key: 'project-list',
-      kind: 'project-list',
-      projects,
-      activeProjectId,
-      isSavingProjectOrder,
-      onProjectClick,
-      onProjectsDragEnd,
-    });
-  }
-
-  // Always show Create Project — local-first has no sign-in gate.
-  projectSectionItems.push({
-    key: 'create-project',
-    kind: 'icon-button',
-    label: 'Create project',
-    icon: PlusIcon,
-    onClick: onCreateProject,
-    className: 'bg-primary text-muted hover:text-normal hover:bg-tertiary',
-    wrapperClassName: 'pt-base',
-  });
-
-  sections.push({
-    key: 'projects',
-    label: 'Projects',
-    items: projectSectionItems,
-  });
-
   function renderSectionItem(item: AppBarSectionItem): ReactNode {
-    switch (item.kind) {
-      case 'icon-button':
-        return (
-          <Tooltip content={item.label} side="right">
-            <button
-              type="button"
-              onClick={item.onClick}
-              className={getStandardAppBarButtonClassName({
-                isActive: item.isActive,
-                className: item.className,
-              })}
-              aria-label={item.label}
-            >
-              <item.icon className="size-icon-base" weight="bold" />
-            </button>
-          </Tooltip>
-        );
-      case 'loading':
-        return (
-          <div className="flex items-center justify-center w-10 h-10">
-            <SpinnerIcon className="size-5 animate-spin text-muted" />
-          </div>
-        );
-      case 'project-list':
-        return (
-          <DragDropContext onDragEnd={item.onProjectsDragEnd}>
-            <Droppable
-              droppableId="app-bar-projects"
-              direction="vertical"
-              isDropDisabled={item.isSavingProjectOrder}
-            >
-              {(dropProvided) => (
-                <div
-                  ref={dropProvided.innerRef}
-                  {...dropProvided.droppableProps}
-                  className="flex flex-col items-center -mb-base"
-                >
-                  {item.projects.map((project, index) => (
-                    <Draggable
-                      key={project.id}
-                      draggableId={project.id}
-                      index={index}
-                      disableInteractiveElementBlocking
-                      isDragDisabled={item.isSavingProjectOrder}
-                    >
-                      {(dragProvided, snapshot) => (
-                        <div
-                          ref={dragProvided.innerRef}
-                          {...dragProvided.draggableProps}
-                          {...dragProvided.dragHandleProps}
-                          className="mb-base"
-                          style={dragProvided.draggableProps.style}
-                        >
-                          <Tooltip content={project.name} side="right">
-                            <button
-                              type="button"
-                              onClick={() => item.onProjectClick(project.id)}
-                              className={cn(
-                                appBarItemBaseClassName,
-                                'cursor-grab',
-                                snapshot.isDragging && 'shadow-lg',
-                                item.activeProjectId === project.id
-                                  ? ''
-                                  : 'bg-primary text-normal hover:opacity-80'
-                              )}
-                              style={
-                                item.activeProjectId === project.id
-                                  ? {
-                                      color: `hsl(${project.color})`,
-                                      backgroundColor: `hsl(${project.color} / 0.2)`,
-                                    }
-                                  : undefined
-                              }
-                              aria-label={project.name}
-                            >
-                              {getProjectInitials(project.name)}
-                            </button>
-                          </Tooltip>
-                        </div>
-                      )}
-                    </Draggable>
-                  ))}
-                  {dropProvided.placeholder}
-                </div>
-              )}
-            </Droppable>
-          </DragDropContext>
-        );
-    }
+    return (
+      <Tooltip content={item.label} side="right">
+        <button
+          type="button"
+          onClick={item.onClick}
+          className={getStandardAppBarButtonClassName({
+            isActive: item.isActive,
+            className: item.className,
+          })}
+          aria-label={item.label}
+        >
+          <item.icon className="size-icon-base" weight="bold" />
+        </button>
+      </Tooltip>
+    );
   }
 
   return (
@@ -322,9 +160,7 @@ export function AppBar({
           {section.items.map((item) => (
             <div
               key={item.key}
-              className={
-                'wrapperClassName' in item ? item.wrapperClassName : undefined
-              }
+              className={item.wrapperClassName}
             >
               {renderSectionItem(item)}
             </div>
