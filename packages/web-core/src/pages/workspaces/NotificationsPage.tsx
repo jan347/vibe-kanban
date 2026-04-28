@@ -17,7 +17,9 @@ function NotificationMessage({
   membersByUserId,
 }: {
   segments: MessageSegment[];
-  membersByUserId: ReturnType<typeof useNotificationMembers>['membersByUserId'];
+  membersByUserId: ReturnType<
+    typeof useNotificationMembers
+  >['data']['membersByUserId'];
 }) {
   return (
     <>
@@ -60,7 +62,8 @@ export function NotificationsPage() {
   const router = useRouter();
   const { data, updateMany, enabled, unseenCount, groupedNotifications } =
     useNotifications();
-  const { membersByUserId } = useNotificationMembers(data);
+  const { data: notificationMembers } = useNotificationMembers();
+  const membersByUserId = notificationMembers.membersByUserId;
 
   const markGroupSeen = useCallback(
     (group: GroupedNotification) => {

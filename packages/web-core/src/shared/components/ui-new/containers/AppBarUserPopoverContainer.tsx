@@ -1,15 +1,20 @@
 import { useState } from 'react';
-import type { OrganizationWithRole } from 'shared/types';
 import { AppBarUserPopover } from '@gencap/ui/components/AppBarUserPopover';
 import { SettingsDialog } from '@/shared/dialogs/settings/SettingsDialog';
 import { useAuth } from '@/shared/hooks/auth/useAuth';
-import { useUserSystem } from '@/shared/hooks/useUserSystem';
-import { useOrganizationStore } from '@/shared/stores/useOrganizationStore';
 import { useActions } from '@/shared/hooks/useActions';
 import { Actions } from '@/shared/actions';
 
+// TODO(local-first): orgs are dead, but the AppBarUserPopover prop shape still
+// expects an organizations array. We pass an empty list and ignore selection.
+interface AppBarOrganization {
+  id: string;
+  name: string;
+  is_personal: boolean;
+}
+
 interface AppBarUserPopoverContainerProps {
-  organizations: OrganizationWithRole[];
+  organizations: AppBarOrganization[];
   selectedOrgId: string;
   onOrgSelect: (orgId: string) => void;
 }
@@ -21,16 +26,11 @@ export function AppBarUserPopoverContainer({
 }: AppBarUserPopoverContainerProps) {
   const { executeAction } = useActions();
   const { isSignedIn } = useAuth();
-  const { loginStatus } = useUserSystem();
-  const setSelectedOrgId = useOrganizationStore((s) => s.setSelectedOrgId);
   const [open, setOpen] = useState(false);
   const [avatarError, setAvatarError] = useState(false);
 
-  // Extract avatar URL from first provider
-  const avatarUrl =
-    loginStatus?.status === 'loggedin'
-      ? (loginStatus.profile?.providers[0]?.avatar_url ?? null)
-      : null;
+  // TODO(local-first): no remote profile/avatar in single-user mode.
+  const avatarUrl: string | null = null;
 
   const handleSignIn = async () => {
     await executeAction(Actions.SignIn);
@@ -40,9 +40,8 @@ export function AppBarUserPopoverContainer({
     await executeAction(Actions.SignOut);
   };
 
-  const handleOrgSettings = async (orgId: string) => {
-    setSelectedOrgId(orgId);
-    await SettingsDialog.show({ initialSection: 'organizations' });
+  const handleOrgSettings = async (_orgId: string) => {
+    await SettingsDialog.show({ initialSection: 'general' });
   };
 
   const handleSettings = async () => {
@@ -55,7 +54,7 @@ export function AppBarUserPopoverContainer({
       isSignedIn={isSignedIn}
       avatarUrl={avatarUrl}
       avatarError={avatarError}
-      organizations={organizations}
+      organizations={organizations as never}
       selectedOrgId={selectedOrgId}
       open={open}
       onOpenChange={setOpen}

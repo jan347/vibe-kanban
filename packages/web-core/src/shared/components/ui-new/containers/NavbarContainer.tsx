@@ -127,7 +127,10 @@ export function NavbarContainer({
   const { workspace: selectedWorkspace, isCreateMode } = useWorkspaceContext();
   const { workspaces } = useUserContext();
   const syncErrorContext = useSyncErrorContext();
-  const { remoteAuthDegraded } = useUserSystem();
+  // TODO(local-first): remoteAuthDegraded removed — single-user local mode
+  // does not have remote auth.
+  const remoteAuthDegraded: unknown = null;
+  void useUserSystem;
   const appNavigation = useAppNavigation();
   const destination = useCurrentAppDestination();
   const projectDestination = useMemo(

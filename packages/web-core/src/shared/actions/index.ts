@@ -429,14 +429,10 @@ export const Actions = {
     icon: GearIcon,
     requiresTarget: ActionTargetType.NONE,
     isVisible: (ctx) => ctx.layoutMode === 'kanban',
-    execute: async (ctx) => {
-      await SettingsDialog.show({
-        initialSection: 'remote-projects',
-        initialState: {
-          organizationId: ctx.kanbanOrgId,
-          projectId: ctx.kanbanProjectId,
-        },
-      });
+    execute: async (_ctx) => {
+      // TODO(local-first): remote-projects settings panel removed; route to
+      // general settings.
+      await SettingsDialog.show({ initialSection: 'general' });
     },
   } satisfies GlobalActionDefinition,
 
@@ -461,19 +457,8 @@ export const Actions = {
     requiresTarget: ActionTargetType.NONE,
     isVisible: (ctx) => ctx.isSignedIn,
     execute: async (ctx) => {
-      const { oauthApi } = await import('@/shared/lib/api');
-      const { useOrganizationStore } = await import(
-        '@/shared/stores/useOrganizationStore'
-      );
-      const { organizationKeys } = await import(
-        '@/shared/hooks/organizationKeys'
-      );
-
-      await oauthApi.logout();
-      useOrganizationStore.getState().clearSelectedOrgId();
-      ctx.queryClient.removeQueries({ queryKey: organizationKeys.all });
-      // Invalidate user-system query to update loginStatus/useAuth state
-      await ctx.queryClient.invalidateQueries({ queryKey: ['user-system'] });
+      // TODO(local-first): sign-out is a no-op in single-user local mode;
+      // we still navigate away to mimic legacy behaviour.
       ctx.appNavigation.goToWorkspaces();
     },
   } satisfies GlobalActionDefinition,

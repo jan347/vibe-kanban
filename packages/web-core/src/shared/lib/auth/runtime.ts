@@ -1,24 +1,22 @@
-type PauseableShape = { pause: () => void; resume: () => void };
+// TODO(local-first): auth runtime is dead. Stubbed for legacy callers.
 
-type CurrentUser = { user_id: string };
+export interface AuthShapeHandle {
+  pause: () => void;
+  resume: () => void;
+}
 
 export interface AuthRuntime {
   getToken: () => Promise<string | null>;
-  triggerRefresh: () => Promise<string | null>;
-  registerShape: (shape: PauseableShape) => () => void;
-  getCurrentUser: () => Promise<CurrentUser>;
+  triggerRefresh: () => Promise<void>;
+  registerShape: (handle: AuthShapeHandle) => void;
 }
 
-let authRuntime: AuthRuntime | null = null;
-
-export function configureAuthRuntime(runtime: AuthRuntime): void {
-  authRuntime = runtime;
-}
+const NOOP_AUTH_RUNTIME: AuthRuntime = {
+  getToken: async () => null,
+  triggerRefresh: async () => {},
+  registerShape: () => {},
+};
 
 export function getAuthRuntime(): AuthRuntime {
-  if (!authRuntime) {
-    throw new Error('Auth runtime has not been configured');
-  }
-
-  return authRuntime;
+  return NOOP_AUTH_RUNTIME;
 }

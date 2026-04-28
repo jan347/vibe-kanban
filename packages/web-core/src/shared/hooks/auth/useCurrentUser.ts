@@ -1,23 +1,25 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { getAuthRuntime } from '@/shared/lib/auth/runtime';
-import { useEffect } from 'react';
-import { useAuth } from '@/shared/hooks/auth/useAuth';
+// TODO(local-first): current user lookup is dead. Local single-user mode.
 
-export function useCurrentUser() {
-  const { isSignedIn } = useAuth();
-  const query = useQuery({
-    queryKey: ['auth', 'user'],
-    queryFn: () => getAuthRuntime().getCurrentUser(),
-    retry: 2,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    refetchOnWindowFocus: false,
-    refetchOnReconnect: false,
-  });
+export interface LocalUser {
+  user_id: string;
+  email: string | null;
+  first_name: string | null;
+  last_name: string | null;
+  username: string | null;
+}
 
-  const queryClient = useQueryClient();
-  useEffect(() => {
-    queryClient.invalidateQueries({ queryKey: ['auth', 'user'] });
-  }, [queryClient, isSignedIn]);
-
-  return query;
+export function useCurrentUser(): {
+  data: LocalUser | undefined;
+  isLoading: boolean;
+} {
+  return {
+    data: {
+      user_id: 'local',
+      email: null,
+      first_name: null,
+      last_name: null,
+      username: 'local',
+    },
+    isLoading: false,
+  };
 }

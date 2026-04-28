@@ -6,25 +6,13 @@ import {
   useEffect,
   type Ref,
 } from 'react';
-import { useDropzone } from 'react-dropzone';
 import { useTranslation } from 'react-i18next';
 import { IssueProvider } from '@/integrations/remote/IssueProvider';
 import { useIssueContext } from '@/shared/hooks/useIssueContext';
 import { useScratch } from '@/shared/hooks/useScratch';
 import { useDebouncedCallback } from '@/shared/hooks/useDebouncedCallback';
 import { useOrgContext } from '@/shared/hooks/useOrgContext';
-import { useProjectContext } from '@/shared/hooks/useProjectContext';
 import { useCurrentUser } from '@/shared/hooks/auth/useCurrentUser';
-import { useAzureAttachments } from '@/shared/hooks/useAzureAttachments';
-import {
-  commitCommentAttachments,
-  deleteAttachment,
-} from '@/shared/lib/remoteApi';
-import {
-  extractAttachmentIds,
-  removeAttachmentMarkdownBySource,
-  replaceAttachmentSource,
-} from '@/shared/lib/attachmentUtils';
 import {
   IssueCommentsSection,
   type IssueCommentsEditorProps,
@@ -34,7 +22,6 @@ import {
 import WYSIWYGEditor, {
   type WYSIWYGEditorRef,
 } from '@/shared/components/WYSIWYGEditor';
-import { MemberRole } from 'shared/remote-types';
 import { ScratchType } from 'shared/types';
 
 interface IssueCommentsSectionContainerProps {
@@ -58,16 +45,12 @@ export function IssueCommentsSectionContainer({
 function IssueCommentsSectionContent() {
   const { t } = useTranslation('common');
   const { membersWithProfilesById } = useOrgContext();
-  const { projectId } = useProjectContext();
   const issueContext = useIssueContext();
   const { data: currentUser } = useCurrentUser();
   const currentUserId = currentUser?.user_id ?? '';
 
-  // Check if current user is admin
-  const currentUserMember = currentUserId
-    ? membersWithProfilesById.get(currentUserId)
-    : undefined;
-  const isCurrentUserAdmin = currentUserMember?.role === MemberRole.ADMIN;
+  // Local-first single-user: every viewer can modify any comment.
+  const isCurrentUserAdmin = true;
 
   // Ref to comment editor for programmatic focus
   const commentEditorRef = useRef<WYSIWYGEditorRef>(null);
@@ -133,86 +116,15 @@ function IssueCommentsSectionContent() {
     setCommentInput(nextCommentInput);
   }, [isCommentDraftLoading, commentDraft, commentDraftId, commentInput]);
 
-  const handleCommentMarkdownInsert = useCallback((markdown: string) => {
-    setCommentInput((prev) =>
-      prev.trim() ? `${prev}\n\n${markdown}` : markdown
-    );
-  }, []);
-
-  const handleCommentSourceReplace = useCallback(
-    (previousSrc: string, nextSrc: string) => {
-      let didReplace = false;
-      setCommentInput((prev) => {
-        const { content, replaced } = replaceAttachmentSource(
-          prev,
-          previousSrc,
-          nextSrc
-        );
-        didReplace = replaced;
-        return content;
-      });
-      return didReplace;
-    },
-    []
-  );
-
-  const handleCommentSourceRemove = useCallback((src: string) => {
-    let didRemove = false;
-    setCommentInput((prev) => {
-      const { content, removed } = removeAttachmentMarkdownBySource(prev, src);
-      didRemove = removed;
-      return content;
-    });
-    return didRemove;
-  }, []);
-
-  const {
-    uploadFiles,
-    getAttachmentIds,
-    clearAttachments,
-    isUploading,
-    hasPendingAttachments,
-    uploadError,
-    clearUploadError,
-    localAttachments,
-  } = useAzureAttachments({
-    projectId,
-    onMarkdownInsert: handleCommentMarkdownInsert,
-    onAttachmentSourceReplace: handleCommentSourceReplace,
-    onAttachmentSourceRemove: handleCommentSourceRemove,
-  });
-
   useEffect(() => {
     if (hydratedCommentDraftIdRef.current !== commentDraftId) return;
-    if (hasPendingAttachments) return;
     if (skipNextPersistRef.current) {
       skipNextPersistRef.current = false;
       return;
     }
 
     debouncedPersistCommentDraft(commentInput);
-  }, [
-    commentInput,
-    commentDraftId,
-    debouncedPersistCommentDraft,
-    hasPendingAttachments,
-  ]);
-
-  const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
-    onDrop: (acceptedFiles) => {
-      if (acceptedFiles.length > 0) uploadFiles(acceptedFiles);
-    },
-    multiple: true,
-    noClick: true,
-    noKeyboard: true,
-  });
-
-  const onPasteFiles = useCallback(
-    (files: File[]) => {
-      if (files.length > 0) uploadFiles(files);
-    },
-    [uploadFiles]
-  );
+  }, [commentInput, commentDraftId, debouncedPersistCommentDraft]);
 
   // UI state for editing
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
@@ -319,7 +231,7 @@ function IssueCommentsSectionContent() {
   const handleSubmitComment = useCallback(async () => {
     if (!commentInput.trim()) return;
     const message = commentInput.trim();
-    const { persisted } = issueContext.insertComment({
+    issueContext.insertComment({
       issue_id: issueContext.issueId,
       message,
       parent_id: null,
@@ -331,35 +243,9 @@ function IssueCommentsSectionContent() {
     } catch (e) {
       console.error('[IssueCommentsSection] Failed to clear draft:', e);
     }
-
-    const allUploadedIds = getAttachmentIds();
-    if (allUploadedIds.length > 0) {
-      const referencedIds = extractAttachmentIds(message);
-      const idsToCommit = allUploadedIds.filter((id) => referencedIds.has(id));
-      const idsToDelete = allUploadedIds.filter((id) => !referencedIds.has(id));
-
-      if (idsToCommit.length > 0) {
-        try {
-          const confirmedComment = await persisted;
-          await commitCommentAttachments(confirmedComment.id, {
-            attachment_ids: idsToCommit,
-          });
-        } catch (err) {
-          console.error('Failed to commit comment attachments:', err);
-        }
-      }
-      for (const id of idsToDelete) {
-        deleteAttachment(id).catch((err) =>
-          console.error('Failed to delete abandoned attachment:', err)
-        );
-      }
-    }
-    clearAttachments();
   }, [
     commentInput,
     issueContext,
-    getAttachmentIds,
-    clearAttachments,
     cancelDebouncedPersistCommentDraft,
     deleteCommentDraft,
   ]);
@@ -443,8 +329,6 @@ function IssueCommentsSectionContent() {
       disabled,
       autoFocus,
       onCmdEnter,
-      onPasteFiles,
-      localAttachments,
       editorRef,
     }: IssueCommentsEditorProps) => (
       <WYSIWYGEditor
@@ -456,8 +340,6 @@ function IssueCommentsSectionContent() {
         disabled={disabled}
         autoFocus={autoFocus}
         onCmdEnter={onCmdEnter}
-        onPasteFiles={onPasteFiles}
-        localAttachments={localAttachments}
       />
     ),
     []
@@ -481,13 +363,6 @@ function IssueCommentsSectionContent() {
       onReply={handleReply}
       isLoading={issueContext.isLoading}
       commentEditorRef={commentEditorRef}
-      onPasteFiles={onPasteFiles}
-      localAttachments={localAttachments}
-      dropzoneProps={{ getRootProps, getInputProps, isDragActive }}
-      onBrowseAttachment={open}
-      isUploading={isUploading}
-      attachmentError={uploadError}
-      onDismissAttachmentError={clearUploadError}
       renderEditor={renderEditor}
     />
   );

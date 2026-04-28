@@ -1,33 +1,25 @@
-import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
-import { useUiPreferencesStore } from './useUiPreferencesStore';
+// TODO(local-first): organization store is dead. Stub returns null/no-op
+// so legacy consumers still compile.
 
-type State = {
+interface OrganizationStoreState {
   selectedOrgId: string | null;
-  setSelectedOrgId: (orgId: string | null) => void;
+  setSelectedOrgId: (id: string | null) => void;
   clearSelectedOrgId: () => void;
+}
+
+const NO_OP_STATE: OrganizationStoreState = {
+  selectedOrgId: null,
+  setSelectedOrgId: () => {},
+  clearSelectedOrgId: () => {},
 };
 
-export const useOrganizationStore = create<State>()(
-  persist(
-    (set) => ({
-      selectedOrgId: null,
-      setSelectedOrgId: (orgId) => set({ selectedOrgId: orgId }),
-      clearSelectedOrgId: () => set({ selectedOrgId: null }),
-    }),
-    {
-      name: 'organization-selection',
-      partialize: (state) => ({ selectedOrgId: state.selectedOrgId }),
-    }
-  )
+interface UseOrganizationStore {
+  <T>(selector: (state: OrganizationStoreState) => T): T;
+  getState: () => OrganizationStoreState;
+}
+
+export const useOrganizationStore: UseOrganizationStore = Object.assign(
+  <T>(selector: (state: OrganizationStoreState) => T): T =>
+    selector(NO_OP_STATE),
+  { getState: () => NO_OP_STATE }
 );
-
-// Sync org store changes into the UI preferences store for server persistence
-useOrganizationStore.subscribe((state) => {
-  useUiPreferencesStore.getState().setSelectedOrgId(state.selectedOrgId);
-});
-
-export const useSelectedOrgId = () =>
-  useOrganizationStore((s) => s.selectedOrgId);
-export const useSetSelectedOrgId = () =>
-  useOrganizationStore((s) => s.setSelectedOrgId);

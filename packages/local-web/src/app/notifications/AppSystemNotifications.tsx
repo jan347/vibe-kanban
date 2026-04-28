@@ -1,25 +1,15 @@
 import { useEffect, useRef } from 'react';
-import { useAuth } from '@/shared/hooks/auth/useAuth';
-import { useNotificationMembers } from '@/shared/hooks/useNotificationMembers';
 import { useNotifications } from '@/shared/hooks/useNotifications';
 import { getGroupedNotificationText } from '@/shared/lib/notificationMessage';
 import { showSystemNotification } from '@web/app/notifications/showSystemNotification';
 
 export function AppSystemNotifications() {
-  const { userId } = useAuth();
-  const { data, enabled, groupedNotifications } = useNotifications();
-  const { membersByUserId, isLoading, isFetching } =
-    useNotificationMembers(data);
+  const { enabled, groupedNotifications } = useNotifications();
   const displayedNotificationIdsRef = useRef(new Set<string>());
   const initializedRef = useRef(false);
 
   useEffect(() => {
-    displayedNotificationIdsRef.current.clear();
-    initializedRef.current = false;
-  }, [userId]);
-
-  useEffect(() => {
-    if (!enabled || isLoading || isFetching) {
+    if (!enabled) {
       return;
     }
 
@@ -51,11 +41,11 @@ export function AppSystemNotifications() {
       void showSystemNotification({
         id: group.id,
         title: 'GenCap Control Room',
-        body: getGroupedNotificationText(group, membersByUserId),
+        body: getGroupedNotificationText(group),
         deeplinkPath: group.deeplinkPath ?? undefined,
       });
     }
-  }, [enabled, groupedNotifications, isFetching, isLoading, membersByUserId]);
+  }, [enabled, groupedNotifications]);
 
   return null;
 }

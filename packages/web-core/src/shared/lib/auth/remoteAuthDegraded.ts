@@ -1,14 +1,8 @@
-import type { TFunction } from 'i18next';
-
-export const REMOTE_AUTH_UNAVAILABLE_SLUG = 'remote_auth_unavailable';
+// TODO(local-first): remote auth degradation is dead in single-user mode.
 
 export function getRemoteAuthDegradedMessage(
-  slug: string,
-  t: TFunction<'common'>
+  _state: unknown,
+  _t: (key: string) => string
 ): string {
-  switch (slug) {
-    case REMOTE_AUTH_UNAVAILABLE_SLUG:
-    default:
-      return t('syncError.remoteAuthUnavailable');
-  }
+  return '';
 }

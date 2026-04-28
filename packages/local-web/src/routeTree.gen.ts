@@ -9,14 +9,11 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as OnboardingSignInRouteImport } from './routes/onboarding_.sign-in'
 import { Route as AppWorkspacesRouteImport } from './routes/_app.workspaces'
 import { Route as AppNotificationsRouteImport } from './routes/_app.notifications'
 import { Route as AppMailRouteImport } from './routes/_app.mail'
-import { Route as AppExportRouteImport } from './routes/_app.export'
 import { Route as AppAutomationRouteImport } from './routes/_app.automation'
 import { Route as WorkspacesWorkspaceIdVscodeRouteImport } from './routes/workspaces.$workspaceId.vscode'
 import { Route as AppWorkspacesElectricTestRouteImport } from './routes/_app.workspaces_.electric-test'
@@ -36,11 +33,6 @@ import { Route as AppProjectsProjectIdHostsHostIdWorkspacesCreateDraftIdRouteImp
 import { Route as AppProjectsProjectIdIssuesIssueIdHostsHostIdWorkspacesWorkspaceIdRouteImport } from './routes/_app.projects.$projectId_.issues.$issueId_.hosts.$hostId.workspaces.$workspaceId'
 import { Route as AppProjectsProjectIdIssuesIssueIdHostsHostIdWorkspacesCreateDraftIdRouteImport } from './routes/_app.projects.$projectId_.issues.$issueId_.hosts.$hostId.workspaces.create.$draftId'
 
-const OnboardingRoute = OnboardingRouteImport.update({
-  id: '/onboarding',
-  path: '/onboarding',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AppRoute = AppRouteImport.update({
   id: '/_app',
   getParentRoute: () => rootRouteImport,
@@ -48,11 +40,6 @@ const AppRoute = AppRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const OnboardingSignInRoute = OnboardingSignInRouteImport.update({
-  id: '/onboarding_/sign-in',
-  path: '/onboarding/sign-in',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppWorkspacesRoute = AppWorkspacesRouteImport.update({
@@ -68,11 +55,6 @@ const AppNotificationsRoute = AppNotificationsRouteImport.update({
 const AppMailRoute = AppMailRouteImport.update({
   id: '/mail',
   path: '/mail',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppExportRoute = AppExportRouteImport.update({
-  id: '/export',
-  path: '/export',
   getParentRoute: () => AppRoute,
 } as any)
 const AppAutomationRoute = AppAutomationRouteImport.update({
@@ -186,13 +168,10 @@ const AppProjectsProjectIdIssuesIssueIdHostsHostIdWorkspacesCreateDraftIdRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/onboarding': typeof OnboardingRoute
   '/automation': typeof AppAutomationRoute
-  '/export': typeof AppExportRoute
   '/mail': typeof AppMailRouteWithChildren
   '/notifications': typeof AppNotificationsRoute
   '/workspaces': typeof AppWorkspacesRoute
-  '/onboarding/sign-in': typeof OnboardingSignInRoute
   '/projects/$projectId': typeof AppProjectsProjectIdRoute
   '/workspaces/$workspaceId': typeof AppWorkspacesWorkspaceIdRoute
   '/workspaces/create': typeof AppWorkspacesCreateRoute
@@ -213,13 +192,10 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/onboarding': typeof OnboardingRoute
   '/automation': typeof AppAutomationRoute
-  '/export': typeof AppExportRoute
   '/mail': typeof AppMailRouteWithChildren
   '/notifications': typeof AppNotificationsRoute
   '/workspaces': typeof AppWorkspacesRoute
-  '/onboarding/sign-in': typeof OnboardingSignInRoute
   '/projects/$projectId': typeof AppProjectsProjectIdRoute
   '/workspaces/$workspaceId': typeof AppWorkspacesWorkspaceIdRoute
   '/workspaces/create': typeof AppWorkspacesCreateRoute
@@ -242,13 +218,10 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_app': typeof AppRouteWithChildren
-  '/onboarding': typeof OnboardingRoute
   '/_app/automation': typeof AppAutomationRoute
-  '/_app/export': typeof AppExportRoute
   '/_app/mail': typeof AppMailRouteWithChildren
   '/_app/notifications': typeof AppNotificationsRoute
   '/_app/workspaces': typeof AppWorkspacesRoute
-  '/onboarding_/sign-in': typeof OnboardingSignInRoute
   '/_app/projects/$projectId': typeof AppProjectsProjectIdRoute
   '/_app/workspaces_/$workspaceId': typeof AppWorkspacesWorkspaceIdRoute
   '/_app/workspaces_/create': typeof AppWorkspacesCreateRoute
@@ -271,13 +244,10 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/onboarding'
     | '/automation'
-    | '/export'
     | '/mail'
     | '/notifications'
     | '/workspaces'
-    | '/onboarding/sign-in'
     | '/projects/$projectId'
     | '/workspaces/$workspaceId'
     | '/workspaces/create'
@@ -298,13 +268,10 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/onboarding'
     | '/automation'
-    | '/export'
     | '/mail'
     | '/notifications'
     | '/workspaces'
-    | '/onboarding/sign-in'
     | '/projects/$projectId'
     | '/workspaces/$workspaceId'
     | '/workspaces/create'
@@ -326,13 +293,10 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_app'
-    | '/onboarding'
     | '/_app/automation'
-    | '/_app/export'
     | '/_app/mail'
     | '/_app/notifications'
     | '/_app/workspaces'
-    | '/onboarding_/sign-in'
     | '/_app/projects/$projectId'
     | '/_app/workspaces_/$workspaceId'
     | '/_app/workspaces_/create'
@@ -355,21 +319,12 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AppRoute: typeof AppRouteWithChildren
-  OnboardingRoute: typeof OnboardingRoute
-  OnboardingSignInRoute: typeof OnboardingSignInRoute
   WorkspacesWorkspaceIdVscodeRoute: typeof WorkspacesWorkspaceIdVscodeRoute
   HostsHostIdWorkspacesWorkspaceIdVscodeRoute: typeof HostsHostIdWorkspacesWorkspaceIdVscodeRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/onboarding': {
-      id: '/onboarding'
-      path: '/onboarding'
-      fullPath: '/onboarding'
-      preLoaderRoute: typeof OnboardingRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/_app': {
       id: '/_app'
       path: ''
@@ -382,13 +337,6 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/onboarding_/sign-in': {
-      id: '/onboarding_/sign-in'
-      path: '/onboarding/sign-in'
-      fullPath: '/onboarding/sign-in'
-      preLoaderRoute: typeof OnboardingSignInRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_app/workspaces': {
@@ -410,13 +358,6 @@ declare module '@tanstack/react-router' {
       path: '/mail'
       fullPath: '/mail'
       preLoaderRoute: typeof AppMailRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/export': {
-      id: '/_app/export'
-      path: '/export'
-      fullPath: '/export'
-      preLoaderRoute: typeof AppExportRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/automation': {
@@ -561,7 +502,6 @@ const AppMailRouteWithChildren =
 
 interface AppRouteChildren {
   AppAutomationRoute: typeof AppAutomationRoute
-  AppExportRoute: typeof AppExportRoute
   AppMailRoute: typeof AppMailRouteWithChildren
   AppNotificationsRoute: typeof AppNotificationsRoute
   AppWorkspacesRoute: typeof AppWorkspacesRoute
@@ -583,7 +523,6 @@ interface AppRouteChildren {
 
 const AppRouteChildren: AppRouteChildren = {
   AppAutomationRoute: AppAutomationRoute,
-  AppExportRoute: AppExportRoute,
   AppMailRoute: AppMailRouteWithChildren,
   AppNotificationsRoute: AppNotificationsRoute,
   AppWorkspacesRoute: AppWorkspacesRoute,
@@ -616,8 +555,6 @@ const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppRoute: AppRouteWithChildren,
-  OnboardingRoute: OnboardingRoute,
-  OnboardingSignInRoute: OnboardingSignInRoute,
   WorkspacesWorkspaceIdVscodeRoute: WorkspacesWorkspaceIdVscodeRoute,
   HostsHostIdWorkspacesWorkspaceIdVscodeRoute:
     HostsHostIdWorkspacesWorkspaceIdVscodeRoute,

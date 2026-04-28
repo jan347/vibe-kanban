@@ -1,42 +1,38 @@
-import { useMemo } from 'react';
-import { useShape } from '@/shared/integrations/electric/hooks';
-import {
-  NOTIFICATIONS_SHAPE,
-  NOTIFICATION_MUTATION,
-} from 'shared/remote-types';
-import { useAuth } from '@/shared/hooks/auth/useAuth';
-import { groupNotifications } from '@/shared/lib/notifications';
+// Local-first stub. The original hook synced notifications via Electric
+// against the multi-tenant backend; that surface is gone. In single-user
+// local mode there are no inter-user notifications, so we return an
+// empty list and a no-op updater. AppBarNotificationBellContainer and
+// NotificationsPage render their empty/zero states with this shape.
+import type { GroupedNotification } from '@/shared/lib/notifications';
 
-export function useNotifications() {
-  const { isSignedIn, userId } = useAuth();
+interface NotificationRow {
+  id: string;
+  seen: boolean;
+}
 
-  const enabled = isSignedIn && !!userId;
+interface NotificationUpdate {
+  id: string;
+  changes: Partial<NotificationRow>;
+}
 
-  const result = useShape(
-    NOTIFICATIONS_SHAPE,
-    {
-      user_id: userId || '',
-    },
-    {
-      enabled,
-      mutation: NOTIFICATION_MUTATION,
-    }
-  );
+interface UseNotificationsResult {
+  data: NotificationRow[];
+  enabled: boolean;
+  unseenCount: number;
+  groupedNotifications: GroupedNotification[];
+  updateMany: (_updates: NotificationUpdate[]) => void;
+  isLoading: boolean;
+  error: null;
+}
 
-  const groupedNotifications = useMemo(
-    () => groupNotifications(result.data),
-    [result.data]
-  );
-
-  const unseenCount = useMemo(
-    () => groupedNotifications.filter((group) => !group.seen).length,
-    [groupedNotifications]
-  );
-
+export function useNotifications(): UseNotificationsResult {
   return {
-    ...result,
-    enabled,
-    groupedNotifications,
-    unseenCount,
+    data: [],
+    enabled: false,
+    unseenCount: 0,
+    groupedNotifications: [],
+    updateMany: () => {},
+    isLoading: false,
+    error: null,
   };
 }

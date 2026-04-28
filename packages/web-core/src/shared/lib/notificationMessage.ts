@@ -1,6 +1,5 @@
 import type { GroupedNotification } from '@/shared/lib/notifications';
 import { getPayload } from '@/shared/lib/notifications';
-import type { OrganizationMemberWithProfile } from 'shared/types';
 
 export type MessageSegment =
   | { type: 'text'; value: string }
@@ -22,19 +21,6 @@ function issue(value: string): MessageSegment {
 
 function user(userId: string): MessageSegment {
   return { type: 'user', userId };
-}
-
-function getMemberLabel(member?: OrganizationMemberWithProfile): string | null {
-  if (!member) return null;
-
-  const fullName = [member.first_name, member.last_name]
-    .filter((value): value is string => Boolean(value && value.trim()))
-    .join(' ');
-
-  if (fullName) return fullName;
-  if (member.username?.trim()) return member.username;
-
-  return null;
 }
 
 function formatPriority(priority?: string | null): string | null {
@@ -209,16 +195,11 @@ export function getGroupedNotificationSegments(
   }
 }
 
-export function getGroupedNotificationText(
-  group: GroupedNotification,
-  membersByUserId?: Map<string, OrganizationMemberWithProfile>
-): string {
+export function getGroupedNotificationText(group: GroupedNotification): string {
   return getGroupedNotificationSegments(group)
     .map((segment) => {
       if (segment.type === 'user') {
-        return (
-          getMemberLabel(membersByUserId?.get(segment.userId)) ?? 'Someone'
-        );
+        return 'Someone';
       }
 
       return segment.value;

@@ -1,23 +1,13 @@
-import { useShape } from '@/shared/integrations/electric/hooks';
-import { PROJECTS_SHAPE } from 'shared/remote-types';
-import { useAuth } from '@/shared/hooks/auth/useAuth';
+// TODO(local-first): organization-scoped projects are dead in single-user
+// local mode. Stub returns an empty list so legacy consumers still compile.
 
-export function useOrganizationProjects(organizationId: string | null) {
-  const { isSignedIn } = useAuth();
+import type { Project } from 'shared/remote-types';
 
-  // Only subscribe to Electric when signed in AND have an org
-  const enabled = isSignedIn && !!organizationId;
+export type OrgProject = Project;
 
-  const { data, isLoading, error } = useShape(
-    PROJECTS_SHAPE,
-    { organization_id: organizationId || '' },
-    { enabled }
-  );
-
-  return {
-    data,
-    isLoading,
-    isError: !!error,
-    error,
-  };
+export function useOrganizationProjects(_orgId: string | null | undefined): {
+  data: OrgProject[];
+  isLoading: boolean;
+} {
+  return { data: [], isLoading: false };
 }

@@ -1,7 +1,5 @@
 export type AppDestination =
   | { kind: 'root' }
-  | { kind: 'onboarding' }
-  | { kind: 'onboarding-sign-in' }
   | { kind: 'workspaces'; hostId?: string }
   | { kind: 'workspaces-create'; hostId?: string }
   | { kind: 'workspace'; workspaceId: string; hostId?: string }
@@ -41,8 +39,6 @@ export type NavigationTransition = {
 export interface AppNavigation {
   resolveFromPath(path: string): AppDestination | null;
   goToRoot(transition?: NavigationTransition): void;
-  goToOnboarding(transition?: NavigationTransition): void;
-  goToOnboardingSignIn(transition?: NavigationTransition): void;
   goToWorkspaces(transition?: NavigationTransition): void;
   goToWorkspacesCreate(transition?: NavigationTransition): void;
   goToWorkspace(workspaceId: string, transition?: NavigationTransition): void;

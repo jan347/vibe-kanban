@@ -2,7 +2,8 @@ import { useCallback, useMemo, useRef, useEffect, useState } from 'react';
 import { create, useModal } from '@ebay/nice-modal-react';
 import { useTranslation } from 'react-i18next';
 import type { Project } from 'shared/remote-types';
-import type { OrganizationMemberWithProfile } from 'shared/types';
+// TODO(local-first): OrganizationMemberWithProfile is dead. Use stub member shape.
+import type { OrgMemberWithProfile as OrganizationMemberWithProfile } from '@/shared/hooks/useOrgContext';
 import { defineModal } from '@/shared/lib/modals';
 import { CommandDialog } from '@gencap/ui/components/Command';
 import {

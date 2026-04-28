@@ -41,7 +41,7 @@ import {
   type ProjectIssueCreateOptions,
   useKanbanIssueComposer,
 } from '@/shared/stores/useKanbanIssueComposerStore';
-import type { OrganizationMemberWithProfile } from 'shared/types';
+import type { OrgMemberWithProfile } from '@/shared/hooks/useOrgContext';
 import {
   KanbanProvider,
   KanbanBoard,
@@ -539,9 +539,9 @@ export function KanbanContainer() {
     return map;
   }, [issues]);
 
-  // Create a lookup map for issue assignees (issue_id -> OrganizationMemberWithProfile[])
+  // Create a lookup map for issue assignees (issue_id -> OrgMemberWithProfile[])
   const issueAssigneesMap = useMemo(() => {
-    const map: Record<string, OrganizationMemberWithProfile[]> = {};
+    const map: Record<string, OrgMemberWithProfile[]> = {};
     for (const assignee of issueAssignees) {
       const member = membersWithProfilesById.get(assignee.user_id);
       if (member) {

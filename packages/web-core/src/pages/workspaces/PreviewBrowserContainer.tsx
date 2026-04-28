@@ -186,7 +186,9 @@ export function PreviewBrowserContainer({
     (s) => s.triggerPreviewRefresh
   );
   const { repos, workspaceId: activeWorkspaceId } = useWorkspaceContext();
-  const { previewProxyPort } = useUserSystem();
+  // TODO(local-first): preview proxy port lookup removed; preview is direct.
+  const previewProxyPort: number | null = null;
+  void useUserSystem;
   const hostId = useHostId();
 
   const {

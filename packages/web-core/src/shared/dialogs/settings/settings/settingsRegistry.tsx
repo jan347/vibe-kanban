@@ -1,42 +1,36 @@
 import {
   GearIcon,
   GitBranchIcon,
-  BuildingsIcon,
-  CloudIcon,
   CpuIcon,
   PlugIcon,
-  BroadcastIcon,
 } from '@phosphor-icons/react';
 import type { Icon } from '@phosphor-icons/react';
 import { GeneralSettingsSection } from './GeneralSettingsSection';
 import { ReposSettingsSection } from './ReposSettingsSection';
-import { OrganizationsSettingsSection } from './OrganizationsSettingsSection';
-import { RemoteProjectsSettingsSection } from './RemoteProjectsSettingsSection';
 import { AgentsSettingsSection } from './AgentsSettingsSection';
 import { McpSettingsSection } from './McpSettingsSection';
-import { RelaySettingsSectionContent } from './RelaySettingsSection';
 
 export type SettingsSectionType =
+  // TODO(local-first): 'organizations' | 'relay' | 'remote-projects' are kept
+  // as accepted ids so legacy callers compile, but are routed to 'general'.
   | 'general'
   | 'repos'
-  | 'organizations'
-  | 'remote-projects'
   | 'agents'
   | 'mcp'
-  | 'relay';
+  | 'organizations'
+  | 'relay'
+  | 'remote-projects';
 
 export type SettingsSectionGroup = 'host' | 'universal';
 
 export type SettingsSectionInitialState = {
   general: undefined;
   repos: { repoId?: string } | undefined;
-  organizations: { organizationId?: string } | undefined;
-  'remote-projects':
-    | { organizationId?: string; projectId?: string }
-    | undefined;
   agents: { executor?: string; variant?: string } | undefined;
   mcp: undefined;
+  organizations: undefined;
   relay: { hostId?: string } | undefined;
+  'remote-projects': { organizationId?: string } | undefined;
 };
 
 export interface SettingsSectionDefinition {
@@ -50,9 +44,6 @@ export const SETTINGS_SECTION_DEFINITIONS: SettingsSectionDefinition[] = [
   { id: 'repos', icon: GitBranchIcon, group: 'host' },
   { id: 'agents', icon: CpuIcon, group: 'host' },
   { id: 'mcp', icon: PlugIcon, group: 'host' },
-  { id: 'organizations', icon: BuildingsIcon, group: 'universal' },
-  { id: 'remote-projects', icon: CloudIcon, group: 'universal' },
-  { id: 'relay', icon: BroadcastIcon, group: 'universal' },
 ];
 
 export function isHostSpecificSettingsSection(
@@ -67,7 +58,7 @@ export function isHostSpecificSettingsSection(
 export function renderSettingsSection(
   type: SettingsSectionType,
   initialState?: SettingsSectionInitialState[SettingsSectionType],
-  onClose?: () => void
+  _onClose?: () => void
 ) {
   switch (type) {
     case 'general':
@@ -78,27 +69,14 @@ export function renderSettingsSection(
           initialState={initialState as SettingsSectionInitialState['repos']}
         />
       );
-    case 'organizations':
-      return <OrganizationsSettingsSection />;
-    case 'remote-projects':
-      return (
-        <RemoteProjectsSettingsSection
-          initialState={
-            initialState as SettingsSectionInitialState['remote-projects']
-          }
-        />
-      );
     case 'agents':
       return <AgentsSettingsSection />;
     case 'mcp':
       return <McpSettingsSection />;
+    // TODO(local-first): legacy section ids fall back to general.
+    case 'organizations':
     case 'relay':
-      return (
-        <RelaySettingsSectionContent
-          initialState={initialState as SettingsSectionInitialState['relay']}
-          onClose={onClose}
-        />
-      );
+    case 'remote-projects':
     default:
       return <GeneralSettingsSection />;
   }
