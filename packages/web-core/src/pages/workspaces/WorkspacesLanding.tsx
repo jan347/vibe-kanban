@@ -1,6 +1,10 @@
 import { useMemo } from 'react';
-import { useNavigate } from '@tanstack/react-router';
-import { SpinnerIcon, PlusIcon, EnvelopeIcon } from '@phosphor-icons/react';
+import {
+  SpinnerIcon,
+  PlusIcon,
+  EnvelopeIcon,
+  RobotIcon,
+} from '@phosphor-icons/react';
 import { useAppNavigation } from '@/shared/hooks/useAppNavigation';
 import {
   useWorkspaces,
@@ -91,7 +95,6 @@ function WorkspaceRow({
 
 export function WorkspacesLanding() {
   const appNavigation = useAppNavigation();
-  const navigate = useNavigate();
   const { workspaces, isLoading } = useWorkspaces();
   const { data: unreadMail } = useUnreadMail();
   const unreadMailCount = unreadMail?.length ?? 0;
@@ -121,18 +124,50 @@ export function WorkspacesLanding() {
 
   if (workspaces.length === 0) {
     return (
-      <div className="flex h-full flex-1 flex-col items-center justify-center gap-4 bg-primary p-8">
-        <h2 className="text-lg text-high">No workspaces yet</h2>
-        <p className="text-low">
-          Create your first workspace to start an agent.
-        </p>
-        <button
-          className="flex items-center gap-1 rounded-sm bg-brand px-4 py-2 text-base text-high hover:bg-brand-hover"
-          onClick={() => appNavigation.goToWorkspacesCreate({})}
-        >
-          <PlusIcon className="size-4" />
-          Create workspace
-        </button>
+      <div className="flex h-full flex-1 items-center justify-center bg-primary p-8">
+        <div className="flex w-full max-w-xl flex-col gap-6 rounded-sm border border-border bg-secondary p-8">
+          <div className="space-y-1">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-low">
+              GenCap Control Room
+            </p>
+            <h2 className="text-2xl font-semibold text-high">
+              Spin up your first workspace
+            </h2>
+            <p className="text-sm text-low">
+              A workspace is one task pointed at one agent. Pick a repo,
+              describe the work, the supervisor decides what auto-runs and what
+              escalates to you.
+            </p>
+          </div>
+          <button
+            className="inline-flex items-center justify-center gap-2 self-start rounded-sm bg-brand px-base py-half text-sm font-medium text-on-brand transition-colors hover:bg-brand-hover"
+            onClick={() => appNavigation.goToWorkspacesCreate({})}
+          >
+            <PlusIcon className="size-icon-base" weight="bold" />
+            Create workspace
+          </button>
+          <div className="border-t border-border pt-base">
+            <p className="mb-half text-xs font-medium uppercase tracking-wide text-low">
+              While you wait
+            </p>
+            <div className="flex flex-col gap-half text-sm">
+              <button
+                className="inline-flex items-center gap-2 self-start rounded-sm px-2 py-1 text-normal hover:bg-tertiary"
+                onClick={() => appNavigation.goToAutomation()}
+              >
+                <RobotIcon className="size-icon-sm" weight="bold" />
+                Configure Auto Mode policy
+              </button>
+              <button
+                className="inline-flex items-center gap-2 self-start rounded-sm px-2 py-1 text-normal hover:bg-tertiary"
+                onClick={() => appNavigation.goToMail()}
+              >
+                <EnvelopeIcon className="size-icon-sm" weight="bold" />
+                Inbox
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -144,7 +179,7 @@ export function WorkspacesLanding() {
         <div className="flex items-center gap-2">
           <button
             className="flex items-center gap-1 rounded-sm border border-secondary bg-panel px-3 py-1 text-base text-high hover:bg-secondary"
-            onClick={() => navigate({ to: '/mail' as never })}
+            onClick={() => appNavigation.goToMail()}
           >
             <EnvelopeIcon className="size-4" />
             Inbox

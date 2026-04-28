@@ -28,8 +28,7 @@ export function ProjectSunsetPage({ projectName }: ProjectSunsetPageProps) {
                 {projectName
                   ? `"${projectName}" is not available in local-first mode.`
                   : 'This project is not available in local-first mode.'}{' '}
-                Use the workspace list in the sidebar to start a new agent
-                run.
+                Use the workspace list in the sidebar to start a new agent run.
               </p>
             </div>
           </div>

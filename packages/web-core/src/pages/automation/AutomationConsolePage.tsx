@@ -255,9 +255,11 @@ export function AutomationConsolePage() {
           <ShieldCheckIcon className="size-4" /> Policy
         </h2>
         <p className="text-low text-base">
-          One rule per line. <code>allow: substring</code> auto-approves
-          matches; <code>deny: substring</code> denies them. Anything not
-          matched escalates to you.
+          One rule per line. <code>allow: pattern</code> auto-approves matches;{' '}
+          <code>deny: pattern</code> denies them. Patterns are matched as
+          contiguous whitespace-separated tokens — so <code>deny: rm</code>{' '}
+          matches <code>rm -rf /tmp</code> but not <code>farm</code>. Anything
+          that doesn't match escalates to you.
         </p>
         <textarea
           value={policyDraft}
@@ -276,9 +278,9 @@ export function AutomationConsolePage() {
                 auto_approval_policy: policyDraft,
               })
             }
-            className="rounded-sm bg-accent px-4 py-2 text-base text-high disabled:opacity-50"
+            className="rounded-sm bg-brand px-4 py-2 text-sm font-medium text-on-brand transition-colors hover:bg-brand-hover disabled:opacity-50"
           >
-            Save policy
+            {updateConfig.isPending ? 'Saving…' : 'Save policy'}
           </button>
           {config.data?.auto_approval_policy != null && (
             <button
