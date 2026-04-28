@@ -10,8 +10,8 @@ use db::models::mail::{
     MailAttachment, MailError, MailMessageWithRecipients, MailOkResponse, MailThreadSummary,
     MailThreadWithMessages, ReplyMailRequest, SendMailRequest, SendMailResponse, UnreadMailItem,
     attach_blob_to_message, broadcast_mail, get_message_with_recipients, get_thread_with_messages,
-    list_attachments_for_message, list_threads_for_workspace, list_workspace_awaiting_reply,
-    list_workspace_unread, reply_to_message, send_mail,
+    list_attachments_for_message, list_human_unread, list_threads_for_workspace,
+    list_workspace_awaiting_reply, list_workspace_unread, reply_to_message, send_mail,
 };
 use deployment::Deployment;
 use serde::Deserialize;
@@ -32,7 +32,10 @@ struct ListThreadsQuery {
 
 #[derive(Debug, Deserialize)]
 struct WorkspaceQuery {
-    workspace_id: Uuid,
+    /// When omitted, the route returns the human inbox (no workspace
+    /// scope) so the navbar can poll `/api/mail/inbox/unread` even
+    /// before any workspace exists.
+    workspace_id: Option<Uuid>,
 }
 
 async fn send(
@@ -113,8 +116,12 @@ async fn list_unread(
     State(deployment): State<DeploymentImpl>,
     Query(query): Query<WorkspaceQuery>,
 ) -> MailRouteResult<Vec<UnreadMailItem>> {
-    list_workspace_unread(&deployment.db().pool, query.workspace_id)
-        .await
+    let pool = &deployment.db().pool;
+    let result = match query.workspace_id {
+        Some(id) => list_workspace_unread(pool, id).await,
+        None => list_human_unread(pool).await,
+    };
+    result
         .map(|messages| ResponseJson(ApiResponse::success(messages)))
         .map_err(mail_error_response)
 }
@@ -123,7 +130,16 @@ async fn list_awaiting_reply(
     State(deployment): State<DeploymentImpl>,
     Query(query): Query<WorkspaceQuery>,
 ) -> MailRouteResult<Vec<AwaitingReplyItem>> {
-    list_workspace_awaiting_reply(&deployment.db().pool, query.workspace_id)
+    let Some(workspace_id) = query.workspace_id else {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            ResponseJson(json!({
+                "success": false,
+                "message": "workspace_id query param is required for /mail/awaiting-reply",
+            })),
+        ));
+    };
+    list_workspace_awaiting_reply(&deployment.db().pool, workspace_id)
         .await
         .map(|messages| ResponseJson(ApiResponse::success(messages)))
         .map_err(mail_error_response)

@@ -1,14 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { DropResult } from '@hello-pangea/dnd';
 import { Outlet, useNavigate, useParams } from '@tanstack/react-router';
-import { siDiscord, siGithub } from 'simple-icons';
-import {
-  XIcon,
-  PlusIcon,
-  LayoutIcon,
-  KanbanIcon,
-  DownloadSimpleIcon,
-} from '@phosphor-icons/react';
+import { XIcon, PlusIcon, LayoutIcon, KanbanIcon } from '@phosphor-icons/react';
 import { SyncErrorProvider } from '@/shared/providers/SyncErrorProvider';
 import { useIsMobile } from '@/shared/hooks/useIsMobile';
 import { useUiPreferencesStore } from '@/shared/stores/useUiPreferencesStore';
@@ -16,22 +9,16 @@ import { cn } from '@/shared/lib/utils';
 import { isTauriMac } from '@/shared/lib/platform';
 
 import { NavbarContainer } from './NavbarContainer';
-import { AppBar, type AppBarHostStatus } from '@gencap/ui/components/AppBar';
+import { AppBar } from '@gencap/ui/components/AppBar';
 import { MobileDrawer } from '@gencap/ui/components/MobileDrawer';
-import { AppBarUserPopoverContainer } from './AppBarUserPopoverContainer';
 import { useUserOrganizations } from '@/shared/hooks/useUserOrganizations';
 import { useOrganizationStore } from '@/shared/stores/useOrganizationStore';
-import { useAuth } from '@/shared/hooks/auth/useAuth';
-import { useDiscordOnlineCount } from '@/shared/hooks/useDiscordOnlineCount';
-import { useGitHubStars } from '@/shared/hooks/useGitHubStars';
 import { useUserSystem } from '@/shared/hooks/useUserSystem';
 import { useAppUpdateStore } from '@/shared/stores/useAppUpdateStore';
 import { useAppNavigation } from '@/shared/hooks/useAppNavigation';
 import { useCurrentAppDestination } from '@/shared/hooks/useCurrentAppDestination';
 import {
-  getDestinationHostId,
   getProjectDestination,
-  isProjectDestination,
   isLocalWorkspacesDestination,
 } from '@/shared/lib/routes/appNavigation';
 import {
@@ -39,7 +26,6 @@ import {
   type CreateRemoteProjectResult,
 } from '@/shared/dialogs/org/CreateRemoteProjectDialog';
 import { OAuthDialog } from '@/shared/dialogs/global/OAuthDialog';
-import { SettingsDialog } from '@/shared/dialogs/settings/SettingsDialog';
 import { CommandBarDialog } from '@/shared/dialogs/command-bar/CommandBarDialog';
 import { useCommandBarShortcut } from '@/shared/hooks/useCommandBarShortcut';
 import { useWorkspaceSidebarPreviewController } from '@/shared/hooks/useWorkspaceSidebarPreviewController';
@@ -50,11 +36,8 @@ import {
   PROJECTS_SHAPE,
   type Project as RemoteProject,
 } from 'shared/remote-types';
-import { AppBarNotificationBellContainer } from '@/pages/workspaces/AppBarNotificationBellContainer';
 import { WorkspacesSidebarContainer } from '@/pages/workspaces/WorkspacesSidebarContainer';
 import { WorkspacesSidebarReopenTag } from '@gencap/ui/components/WorkspacesSidebar';
-import { useRemoteCloudHostsAppBarModel } from '@/shared/hooks/useRemoteCloudHosts';
-import { CloudShutdownExportBanner } from '@/shared/components/CloudShutdownExportBanner';
 
 export function SharedAppLayout() {
   const appNavigation = useAppNavigation();
@@ -64,16 +47,17 @@ export function SharedAppLayout() {
   const isLeftSidebarVisible = useUiPreferencesStore(
     (s) => s.isLeftSidebarVisible
   );
-  const { isSignedIn } = useAuth();
+  // In local-first single-user mode there is no auth state — collapse
+  // every isSignedIn-gated branch to the always-on path.
+  const isSignedIn = true;
   const { appVersion } = useUserSystem();
   const updateVersion = useAppUpdateStore((s) => s.updateVersion);
   const restartForUpdate = useAppUpdateStore((s) => s.restart);
-  const { data: onlineCount } = useDiscordOnlineCount();
-  const { data: starCount } = useGitHubStars();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isAppBarHovered, setIsAppBarHovered] = useState(false);
-  const { hosts: remoteCloudHosts } = useRemoteCloudHostsAppBarModel();
-  const { hostId: routeHostId } = useParams({ strict: false });
+  // routeHostId was used by the deleted Remote section; keep
+  // useParams hook quiet by referencing nothing.
+  useParams({ strict: false });
   const navigate = useNavigate();
 
   // Register CMD+K shortcut globally for all routes under SharedAppLayout
@@ -172,14 +156,9 @@ export function SharedAppLayout() {
     [currentDestination]
   );
   const isWorkspacesActive = isLocalWorkspacesDestination(currentDestination);
-  const isExportActive = currentDestination?.kind === 'export';
-  const showCloudShutdownBanner =
-    isExportActive || (isSignedIn && isProjectDestination(currentDestination));
   const isWorkspaceSidebarPreviewEnabled =
     !isMobile && isWorkspacesActive && !isLeftSidebarVisible;
   const activeProjectId = projectDestination?.projectId ?? null;
-  const activeHostId =
-    getDestinationHostId(currentDestination) ?? routeHostId ?? null;
   const sidebarPreview = useWorkspaceSidebarPreviewController({
     enabled: isWorkspaceSidebarPreviewEnabled,
     isAppBarHovered,
@@ -199,9 +178,23 @@ export function SharedAppLayout() {
     void navigate({ to: '/workspaces' });
   }, [navigate]);
 
-  const handleExportClick = useCallback(() => {
-    appNavigation.goToExport();
-  }, [appNavigation]);
+  const handleAutomationClick = useCallback(() => {
+    // Routes are registered with `as never` so navigate() can't infer
+    // them; cast through unknown to keep the typed-router happy.
+    void navigate({ to: '/automation' as unknown as '/' });
+  }, [navigate]);
+
+  const handleMailClick = useCallback(() => {
+    void navigate({ to: '/mail' as unknown as '/' });
+  }, [navigate]);
+
+  // Route-active flags for the new local-first nav. We can't rely on
+  // `currentDestination` here because automation/mail aren't part of
+  // the typed destination union — they're top-level local routes.
+  const currentPath =
+    typeof window !== 'undefined' ? window.location.pathname : '';
+  const isAutomationActive = currentPath.startsWith('/automation');
+  const isMailActive = currentPath.startsWith('/mail');
 
   const handleProjectClick = useCallback(
     (projectId: string) => {
@@ -271,31 +264,6 @@ export function SharedAppLayout() {
     }
   }, []);
 
-  const openRelaySettings = useCallback((hostId?: string) => {
-    void SettingsDialog.show({
-      initialSection: 'relay',
-      ...(hostId ? { initialState: { hostId } } : {}),
-    });
-  }, []);
-
-  const handleHostClick = useCallback(
-    (hostId: string, status: AppBarHostStatus) => {
-      if (status === 'offline') {
-        return;
-      }
-
-      void navigate({
-        to: '/hosts/$hostId/workspaces',
-        params: { hostId },
-      });
-    },
-    [navigate]
-  );
-
-  const handlePairHostClick = useCallback(() => {
-    openRelaySettings();
-  }, [openRelaySettings]);
-
   return (
     <SyncErrorProvider>
       <div
@@ -303,21 +271,11 @@ export function SharedAppLayout() {
           'bg-primary',
           isMobile
             ? 'flex fixed inset-0 pb-[env(safe-area-inset-bottom)]'
-            : cn(
-                'grid grid-cols-[auto_1fr] h-screen',
-                showCloudShutdownBanner
-                  ? 'grid-rows-[auto_auto_1fr]'
-                  : 'grid-rows-[auto_1fr]'
-              )
+            : 'grid grid-cols-[auto_1fr] grid-rows-[auto_1fr] h-screen'
         )}
       >
         {!isMobile && (
           <>
-            {showCloudShutdownBanner && (
-              <div className="col-span-2">
-                <CloudShutdownExportBanner onClick={handleExportClick} />
-              </div>
-            )}
             {/* Desktop corner spacer. */}
             <div
               data-tauri-drag-region
@@ -332,41 +290,24 @@ export function SharedAppLayout() {
             {/* Desktop AppBar sidebar. */}
             <AppBar
               projects={orderedProjects}
-              hosts={remoteCloudHosts}
-              activeHostId={activeHostId}
               onCreateProject={handleCreateProject}
-              onExportClick={handleExportClick}
               onWorkspacesClick={handleWorkspacesClick}
-              onHostClick={handleHostClick}
-              onPairHostClick={handlePairHostClick}
+              onAutomationClick={handleAutomationClick}
+              onMailClick={handleMailClick}
               onProjectClick={handleProjectClick}
               onProjectsDragEnd={handleProjectsDragEnd}
               isSavingProjectOrder={isSavingProjectOrder}
               isWorkspacesActive={isWorkspacesActive}
-              isExportActive={isExportActive}
+              isAutomationActive={isAutomationActive}
+              isMailActive={isMailActive}
               activeProjectId={activeProjectId}
-              isSignedIn={isSignedIn}
               isLoadingProjects={isLoading}
-              onSignIn={handleSignIn}
               onHoverStart={() => setIsAppBarHovered(true)}
               onHoverEnd={() => setIsAppBarHovered(false)}
-              notificationBell={
-                isSignedIn ? <AppBarNotificationBellContainer /> : undefined
-              }
-              userPopover={
-                <AppBarUserPopoverContainer
-                  organizations={organizations}
-                  selectedOrgId={selectedOrgId ?? ''}
-                  onOrgSelect={setSelectedOrgId}
-                />
-              }
-              starCount={starCount}
-              onlineCount={onlineCount}
+              notificationBell={undefined}
               appVersion={appVersion}
               updateVersion={updateVersion}
               onUpdateClick={restartForUpdate ?? undefined}
-              githubIconPath={siGithub.path}
-              discordIconPath={siDiscord.path}
             />
             {/* Desktop content. */}
             <div className="relative min-h-0 overflow-hidden">
@@ -405,9 +346,6 @@ export function SharedAppLayout() {
 
         {isMobile && (
           <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
-            {showCloudShutdownBanner && (
-              <CloudShutdownExportBanner onClick={handleExportClick} />
-            )}
             <NavbarContainer
               mobileMode={isMobile}
               onOrgSelect={setSelectedOrgId}
@@ -455,24 +393,6 @@ export function SharedAppLayout() {
 
             {/* Divider */}
             <div className="border-t border-border mx-4" />
-
-            {/* Export link */}
-            {isSignedIn && (
-              <div className="px-4 py-3">
-                <p className="mb-2 text-xs font-medium text-low">Export</p>
-                <button
-                  type="button"
-                  onClick={() => {
-                    handleExportClick();
-                    setIsDrawerOpen(false);
-                  }}
-                  className="flex w-full items-center gap-2 rounded-md px-3 py-2.5 text-sm text-normal hover:bg-secondary cursor-pointer"
-                >
-                  <DownloadSimpleIcon className="h-4 w-4" />
-                  Export data
-                </button>
-              </div>
-            )}
 
             {/* Divider */}
             {isSignedIn && <div className="border-t border-border mx-4" />}

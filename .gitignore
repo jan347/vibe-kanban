@@ -101,3 +101,13 @@ Caddyfile.dev
 .claude/
 .omc/
 JENA_*.md
+
+# Playwright/QA artifacts (local audits)
+.playwright-mcp/
+*.playwright-mcp.png
+workspaces.png
+workspaces-v2.png
+automation.png
+mail.png
+settings.png
+.gstack/qa-reports/

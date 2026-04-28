@@ -1,36 +1,13 @@
-import { useQuery } from '@tanstack/react-query';
-
-async function fetchGitHubStars(): Promise<number | null> {
-  try {
-    const res = await fetch('https://api.github.com/repos/BloopAI/gencap', {
-      cache: 'no-store',
-    });
-
-    if (!res.ok) {
-      console.warn(`GitHub API error: ${res.status}`);
-      return null;
-    }
-
-    const data = await res.json();
-    if (typeof data?.stargazers_count === 'number') {
-      return data.stargazers_count;
-    }
-
-    return null;
-  } catch (error) {
-    console.warn('Failed to fetch GitHub stars:', error);
-    return null;
-  }
-}
-
+// Local-first stub. The original hook fetched stargazer count from
+// `BloopAI/gencap` to decorate the upstream-community Star button —
+// that button is gone, and the upstream repo no longer exists for
+// this fork. Returning a static null preserves the consumer shape
+// without firing 404s in the console.
 export function useGitHubStars() {
-  return useQuery({
-    queryKey: ['github-stars'],
-    queryFn: fetchGitHubStars,
-    refetchInterval: 10 * 60 * 1000,
-    staleTime: 10 * 60 * 1000,
-    retry: false,
-    refetchOnMount: false,
-    placeholderData: (previousData) => previousData,
-  });
+  return {
+    data: null as number | null,
+    isLoading: false,
+    isError: false,
+    error: null,
+  };
 }
