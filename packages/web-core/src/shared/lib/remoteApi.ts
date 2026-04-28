@@ -1,4 +1,18 @@
-// TODO(local-first): remoteApi is dead. Stubbed surface for legacy callers.
+// Local-first stub surface. The original module spoke to the
+// multi-tenant backend (attachments via Azure SAS, bulk issue mutates,
+// relay host directory, Electric sync proxy). All of those are gone.
+//
+// We keep the function signatures so legacy callers compile, but every
+// operation is a no-op or a tagged warning. Throwing here would crash
+// any UI surface the strip missed; warning + safe default keeps the app
+// alive and surfaces the call site in dev tools so we can prune it.
+
+function warnDead(name: string): void {
+  // eslint-disable-next-line no-console
+  console.warn(
+    `[local-first] remoteApi.${name}() called — no-op in single-user local mode.`
+  );
+}
 
 export function getRemoteApiUrl(): string {
   return '';
@@ -8,13 +22,20 @@ export async function makeRequest(
   _path: string,
   _init?: RequestInit
 ): Promise<Response> {
+  warnDead('makeRequest');
   return new Response(null, { status: 503 });
 }
 
+// Signature must accept (attachmentId, type) — passed directly into
+// attachment-node's CreateAttachmentNodeOptions.fetchAttachmentUrl.
+// Returns an empty string so the consumer's <img src=""> produces a
+// broken-image icon rather than crashing on `null`.
 export async function fetchAttachmentSasUrl(
-  _attachmentId: string
+  _attachmentId: string,
+  _type?: 'file' | 'thumbnail'
 ): Promise<string> {
-  throw new Error('Remote attachments are unavailable in local-first mode');
+  warnDead('fetchAttachmentSasUrl');
+  return '';
 }
 
 export interface BulkUpdateIssueItem {
@@ -23,26 +44,25 @@ export interface BulkUpdateIssueItem {
 }
 
 export async function bulkUpdateIssues(_payload: unknown): Promise<void> {
-  throw new Error('Bulk issue update is unavailable in local-first mode');
+  warnDead('bulkUpdateIssues');
 }
 
-// TODO(local-first): attachment helpers stubbed; remote storage is gone.
 export async function commitCommentAttachments(
   _commentId: string,
   _attachmentIds: string[]
 ): Promise<void> {
-  return;
+  // No-op intentionally — comment attachments collapsed to local files.
 }
 
 export async function commitIssueAttachments(
   _issueId: string,
   _attachmentIds: string[]
 ): Promise<void> {
-  return;
+  // No-op intentionally.
 }
 
 export async function deleteAttachment(_attachmentId: string): Promise<void> {
-  return;
+  // No-op intentionally — attachment lifecycle is local-only.
 }
 
 export interface AttachmentInitResponse {
@@ -54,15 +74,14 @@ export interface AttachmentInitResponse {
 export async function initAttachmentUpload(
   _params: Record<string, unknown>
 ): Promise<AttachmentInitResponse> {
-  throw new Error(
-    'Remote attachment upload is unavailable in local-first mode'
-  );
+  warnDead('initAttachmentUpload');
+  return { upload_url: '', attachment_id: '', blob_id: '' };
 }
 
 export async function confirmAttachmentUpload(
   _attachmentId: string
 ): Promise<void> {
-  return;
+  // No-op intentionally.
 }
 
 export async function uploadToAzure(
@@ -70,9 +89,7 @@ export async function uploadToAzure(
   _file: Blob,
   _onProgress?: (pct: number) => void
 ): Promise<void> {
-  throw new Error(
-    'Remote attachment upload is unavailable in local-first mode'
-  );
+  warnDead('uploadToAzure');
 }
 
 export async function computeFileHash(_file: Blob): Promise<string> {

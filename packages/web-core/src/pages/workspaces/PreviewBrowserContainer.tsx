@@ -285,8 +285,16 @@ export function PreviewBrowserContainer({
       return directUrl.toString();
     }
 
-    // Loopback URLs need the preview proxy for origin isolation
-    if (!previewProxyPort) return undefined;
+    // Local-first fallback: when no preview proxy is running, embed the
+    // dev server URL directly. Browsers allow cross-port iframes on
+    // localhost; the parent loses postMessage/inspect-mode bridge but
+    // the user can at least see their app render. The bridge features
+    // come back if a future proxy is wired up.
+    if (!previewProxyPort) {
+      const directUrl = new URL(effectiveParsedUrl.toString());
+      directUrl.searchParams.set('_refresh', String(previewRefreshKey));
+      return directUrl.toString();
+    }
 
     // Don't proxy to GenCap Control Room's own ports (would create infinite loop)
     const vibeKanbanPort = window.location.port || '80';
