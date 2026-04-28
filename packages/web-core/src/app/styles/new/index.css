@@ -75,9 +75,12 @@ html {
     --bg-panel: var(--vscode-input-background, var(--_bg-panel-default));
 
     /* Accent (light) */
-    --brand: 25 82% 54%;
-    --brand-hover: 25 75% 62%;
-    --brand-secondary: 25 82% 37%;
+    /* GenCap Control Room: indigo accent — calm, focused, distinct
+       from vibe-kanban's orange. Tokens live in two places (light
+       + dark variants) — keep them in sync. */
+    --brand: 230 70% 55%;
+    --brand-hover: 230 65% 62%;
+    --brand-secondary: 230 70% 38%;
     --error: 0 59% 57%;
     --success: 117 38% 50%;
     --merged: 271 81% 46%;
@@ -134,9 +137,12 @@ html {
     --bg-panel: var(--vscode-input-background, var(--_bg-panel-default));
 
     /* Accent (dark) */
-    --brand: 25 82% 54%;
-    --brand-hover: 25 75% 62%;
-    --brand-secondary: 25 82% 37%;
+    /* GenCap Control Room: indigo accent — calm, focused, distinct
+       from vibe-kanban's orange. Tokens live in two places (light
+       + dark variants) — keep them in sync. */
+    --brand: 230 70% 55%;
+    --brand-hover: 230 65% 62%;
+    --brand-secondary: 230 70% 38%;
     --error: 0 59% 57%;
     --success: 117 38% 50%;
     --merged: 271 81% 66%;
