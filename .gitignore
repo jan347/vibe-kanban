@@ -111,3 +111,7 @@ automation.png
 mail.png
 settings.png
 .gstack/qa-reports/
+
+# Python cache from scripts/
+scripts/__pycache__/
+*.pyc

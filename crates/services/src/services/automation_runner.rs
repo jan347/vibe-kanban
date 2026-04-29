@@ -119,6 +119,15 @@ async fn tick(pool: &SqlitePool) -> Result<(), sqlx::Error> {
         // Friction-log emit AFTER the last_fired_at UPDATE commits (E-AUTO-1).
         // Fired regardless of supervisor outcome — the rule attempted to run,
         // which is the chokepoint signal we care about for the friction log.
+        // Codex flagged the ambiguity: include the outcome so day-3 reread can
+        // distinguish approved/blocked/errored attempts. Note that an Err here
+        // doesn't roll back last_fired_at (we already committed it above) —
+        // the cadence advances, so the emit is faithful to that fact.
+        let outcome_label = match &outcome {
+            Ok(GatedDispatchResult::Approved(_)) => "approved",
+            Ok(GatedDispatchResult::Blocked(_)) => "blocked",
+            Err(_) => "errored",
+        };
         friction_emitter::emit_for_workspace(
             pool,
             "automation.fire",
@@ -126,6 +135,7 @@ async fn tick(pool: &SqlitePool) -> Result<(), sqlx::Error> {
             json!({
                 "rule_id": r.id.simple().to_string(),
                 "rule_name": r.name,
+                "outcome": outcome_label,
             }),
         )
         .await;

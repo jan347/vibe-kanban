@@ -223,24 +223,37 @@ async fn lookup_venture(pool: &SqlitePool, workspace_id: Uuid) -> Option<String>
 
 #[cfg(test)]
 mod tests {
-    use std::{io::Read, sync::Arc};
+    use std::{
+        io::Read,
+        sync::{Mutex, MutexGuard, OnceLock},
+    };
 
     use serde_json::json;
     use tempfile::TempDir;
 
     use super::*;
 
+    /// Cargo runs tests in parallel within the same binary by default, but
+    /// these tests mutate process-global env vars ($HOME, GENCAP_FRICTION_ENABLED).
+    /// Codex caught this race in the post-implementation review: parallel
+    /// test threads would step on each other's HOME and produce flaky
+    /// pass/fail. Serialize via a module-local mutex.
+    fn test_lock() -> MutexGuard<'static, ()> {
+        static LOCK: OnceLock<Mutex<()>> = OnceLock::new();
+        LOCK.get_or_init(|| Mutex::new(()))
+            .lock()
+            .unwrap_or_else(|poisoned| poisoned.into_inner())
+    }
+
     /// Set up an isolated $HOME for the test so emits write into a tempdir
     /// rather than the user's real ~/.gstack. Returns the expected events
-    /// file path.
+    /// file path. Caller MUST hold a `test_lock()` guard for the duration
+    /// of the test — env-var mutations are process-global.
     fn isolate_home() -> (TempDir, PathBuf) {
         let dir = TempDir::new().expect("tempdir");
-        // SAFETY: tests run sequentially per file by default; we restore
-        // via the TempDir drop. The real risk is test parallelism within
-        // the same module — these tests use the same env var, so cargo's
-        // test threads can race. We rely on cargo running them in a single
-        // thread by setting `--test-threads=1`-equivalent. For now,
-        // `set_var` is acceptable for the small unit-test surface here.
+        // SAFETY: serialized via test_lock() above. Each test acquires the
+        // lock on entry and drops the TempDir + lock on exit, so HOME is
+        // never observed in a half-set state by another test.
         unsafe {
             std::env::set_var("HOME", dir.path());
             std::env::remove_var("GENCAP_FRICTION_ENABLED");
@@ -252,6 +265,7 @@ mod tests {
 
     #[tokio::test(flavor = "current_thread")]
     async fn emit_writes_a_v1_jsonl_line() {
+        let _guard = test_lock();
         let (_home, path) = isolate_home();
         emit("workspace.create", Some("carbonv3"), None, json!({"hello": true})).await;
 
@@ -273,6 +287,7 @@ mod tests {
 
     #[tokio::test(flavor = "current_thread")]
     async fn emit_creates_parent_dir_on_first_call() {
+        let _guard = test_lock();
         let (_home, path) = isolate_home();
         // Parent dir doesn't exist yet — codex H2 caveat. emit must
         // create_dir_all itself rather than relying on bootstrap.
@@ -283,6 +298,7 @@ mod tests {
 
     #[tokio::test(flavor = "current_thread")]
     async fn emit_noop_when_kill_switch_set() {
+        let _guard = test_lock();
         let (_home, path) = isolate_home();
         unsafe {
             std::env::set_var("GENCAP_FRICTION_ENABLED", "0");
@@ -293,6 +309,7 @@ mod tests {
 
     #[tokio::test(flavor = "current_thread")]
     async fn emit_includes_workspace_id_as_simple_hex() {
+        let _guard = test_lock();
         let (_home, path) = isolate_home();
         let id = Uuid::parse_str("12345678-1234-1234-1234-123456789abc").unwrap();
         emit("mail.send", Some("fultech"), Some(id), json!({})).await;
@@ -308,6 +325,7 @@ mod tests {
     /// is the empirical Darwin/APFS atomicity test from E-AUTO-2.
     #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
     async fn concurrent_emits_no_interleave() {
+        let _guard = test_lock();
         let (_home, path) = isolate_home();
         let parallelism = 50_usize;
         let mut handles = Vec::with_capacity(parallelism);
@@ -337,6 +355,7 @@ mod tests {
 
     #[tokio::test(flavor = "current_thread")]
     async fn emit_swallows_non_writable_path() {
+        let _guard = test_lock();
         // Point HOME at a path with a file (not a dir) where the events
         // dir would go. create_dir_all on top of a regular file fails,
         // emit must swallow it, no panic, no crash.
@@ -358,7 +377,7 @@ mod tests {
         // Tripwire: if anyone bumps SCHEMA_VERSION here without updating
         // the docs/designs/friction-log-schema.md versioning policy,
         // future readers will be confused. Keep the assertion explicit.
+        // No env mutation here, no lock needed.
         assert_eq!(SCHEMA_VERSION, 1);
-        let _ = Arc::new(()); // touches Arc import to silence dead_code
     }
 }

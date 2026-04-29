@@ -69,11 +69,13 @@ Per-write strategy in `friction_emitter::emit`:
 
 1. Pre-serialize the full event line (JSON + `\n`) into an in-memory `Vec<u8>` buffer.
 2. `OpenOptions::new().create(true).append(true).open(path)` to acquire a file handle.
-3. Acquire `flock(LOCK_EX)` advisory lock on the handle (cross-process safe — `gencap log` is a separate process from the server and BOTH must use the same locking pattern).
+3. Acquire `flock(LOCK_EX)` advisory lock on the handle.
 4. Single `write_all(&buffer)` of the pre-serialized buffer.
 5. Drop the handle (releases the lock).
 
-**Why flock + single write_all:** `O_APPEND` alone protects file offset (no two appends overlap in offset) but does NOT guarantee record integrity if a single Rust `write_all` call gets split across syscalls under tokio. PIPE_BUF guarantees apply to pipes, not regular files. Cross-process advisory lock + single-syscall write closes both gaps. (See E-AUTO-2 for the full rationale.)
+**Why flock + single write_all:** `O_APPEND` alone protects file offset (no two appends overlap in offset) but does NOT guarantee record integrity if a single Rust `write_all` call gets split across syscalls under tokio. PIPE_BUF guarantees apply to pipes, not regular files. Advisory lock + single-syscall write closes both gaps. (See E-AUTO-2 for the full rationale.)
+
+**Writer isolation between files:** events.jsonl is written ONLY by the Rust `friction_emitter` (the server / Tauri app). `friction-log.jsonl` is written ONLY by the `gencap log` shell helper. The two files have separate flock targets and never compete for the same lock — cross-process contention only matters within a file, and each file has exactly one writer process. The empirical Darwin/APFS test (`concurrent_emits_no_interleave`) covers in-process concurrency for events.jsonl, which is the only file that has multiple potential writers (multiple tokio tasks within the server).
 
 **Failure mode:** Swallows `io::Error` to stderr via `tracing::error!`, never panics. The cockpit MUST NOT crash because the event log can't be written.
 

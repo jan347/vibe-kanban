@@ -416,23 +416,23 @@ def severe_p1_no_event_support(entries: list[Entry], events: list[Event]) -> boo
 def manual_wins_unsupported_high_severity(
     high_sev: list[Entry], events: list[Event]
 ) -> bool:
-    """B7 detector: ≥1 P1/P2 entry weighted-score-dominates the corresponding
-    venture's event count.
+    """B7 detector: aggregate P1/P2 manual signal for any venture
+    weighted-score-dominates that venture's event count.
 
-    With weighting (P1=30, P2=10), a single P1 = 30 > 20 events. So
-    "manual wins" fires when the venture has any P1 OR ≥3 P2s while the
-    same venture has < 20 events.
+    Codex caught the original per-entry implementation missed aggregate
+    cases: 3 P2 entries in fultech (3*10 = 30 aggregate) with 25 events
+    for fultech → manual aggregate dominates 25 events but per-entry
+    P2=10 < 25 didn't fire. Aggregate is the right comparison.
     """
     by_v_events = group_events_by_venture(events)
+    by_v_manual: dict[str | None, float] = {}
     for entry in high_sev:
-        ventures_events = by_v_events.get(entry.venture, [])
-        manual_score = weighted_score(entry)
-        event_score = float(len(ventures_events))
-        if manual_score > event_score and entry.severity == "P1":
-            return True
-        # P2 needs to dominate too (single P2 = 10 > 0 events fires; tighten
-        # to "P2 with no events at all in that venture")
-        if entry.severity == "P2" and not ventures_events:
+        by_v_manual[entry.venture] = (
+            by_v_manual.get(entry.venture, 0.0) + weighted_score(entry)
+        )
+    for venture, manual_score in by_v_manual.items():
+        event_count = float(len(by_v_events.get(venture, [])))
+        if manual_score > event_count:
             return True
     return False
 

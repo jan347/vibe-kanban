@@ -85,17 +85,28 @@ class TestBranchTree:
         assert decide([], [], fresh_event_stats(), days_elapsed=1) == Branch.B1_EXTEND_NO_DATA
 
     def test_b1_below_threshold_with_p2_only(self) -> None:
-        # 4 P2 entries (each score 10), 29 events for same venture.
-        # Per E-AUTO-3: B7 manual_wins requires P1 to dominate, OR P2
-        # with no events at all in that venture. 4 P2 in carbonv3
-        # with 29 carbonv3 events → P2 score 10 < 29 events → B7 false.
-        # P2 with venture "carbonv3" has events → "P2 with no events" false.
-        # Falls through to volume gate. high_sev=4 < 5 → B1.
-        # days_elapsed=0 means no .experiment-start marker → looks_like_low_load
-        # returns False (days <= 0 guard) → still B1.
-        entries = [make_entry("P2") for _ in range(4)]
-        events = [make_event() for _ in range(29)]
-        assert decide(entries, events, fresh_event_stats(parsed=29), 0) == Branch.B1_EXTEND_NO_DATA
+        # 4 P2 entries (aggregate weighted_score per venture = 40 for the
+        # one we put them in). With aggregate B7 (codex fix), manual must
+        # NOT dominate per-venture events. Spread P2s 1-per-venture across
+        # 4 ventures, give each ≥ 11 events so P2 (10) ≤ events.
+        # Then high_sev=4 < 5 → volume gate fires → B1.
+        # days_elapsed=0 means no .experiment-start marker → low_load
+        # check returns False (days <= 0 guard) → still B1.
+        entries = [
+            make_entry("P2", venture="carbonv3"),
+            make_entry("P2", venture="fultech"),
+            make_entry("P2", venture="chief-of-staff"),
+            make_entry("P2", venture="port-analytics"),
+        ]
+        events = (
+            [make_event(venture="carbonv3") for _ in range(11)]
+            + [make_event(venture="fultech") for _ in range(11)]
+            + [make_event(venture="chief-of-staff") for _ in range(11)]
+            + [make_event(venture="port-analytics") for _ in range(11)]
+        )
+        # Total: 44 events. high_sev=4 < 5 → B1 fires.
+        # Per-venture aggregate: each venture has P2(10) ≤ 11 events → no B7.
+        assert decide(entries, events, fresh_event_stats(parsed=44), 0) == Branch.B1_EXTEND_NO_DATA
 
     def test_b1_above_threshold_passes_volume_gate(self) -> None:
         # 5 P1+0 P2, 30 events → passes volume gate, falls to default
@@ -189,15 +200,13 @@ class TestBranchTree:
         assert decide(entries, events, fresh_event_stats(parsed=50), 1) == Branch.B5_INVESTIGATE_NO_MANUAL
 
     def test_b6_low_load(self) -> None:
-        # 5 P1+P2 entries, 10 events over 3 days = 3.3 events/day < 5 → low load
-        entries = [make_entry("P2") for _ in range(5)]
-        events = [make_event() for _ in range(10)]
-        # 5 high_sev passes >= 5, 10 events fails < 30 → volume gate fires.
+        # B6: < 30 events because the operator had a slow week. With
+        # aggregate B7 (codex fix), need per-venture aggregate manual ≤
+        # events. 1 P2 in carbonv3 + 10 events in carbonv3: aggregate 10
+        # ≤ 10 → no B7. 1 high_sev < 5 → volume gate fires.
         # looks_like_low_load: 10 < 30 AND 10/3 < 5 → True → B6.
-        # But B7 fires first — 5 P2 entries in carbonv3, each score 10. 5*10 = 50 manual.
-        # 10 events in carbonv3. Per-entry check: P2 score 10 vs venture event count 10
-        # (NOT empty → second branch of manual_wins doesn't fire). NOT > → B7 false.
-        # So flows to volume gate → B6.
+        entries = [make_entry("P2", venture="carbonv3")]
+        events = [make_event(venture="carbonv3") for _ in range(10)]
         result = decide(entries, events, fresh_event_stats(parsed=10), 3)
         assert result == Branch.B6_LOW_LOAD
 
@@ -257,26 +266,25 @@ class TestBranchTree:
         assert decide(entries, events, bad_stats, 1) == Branch.B11_INSTRUMENTATION_FAILURE
 
     def test_b12_cluster_one_venture(self) -> None:
-        # 8 entries from carbonv3, 1 from fultech, 1 from chief-of-staff.
+        # 8 P2 in carbonv3 + 1 P2 each in fultech + chief = 10 entries.
         # 8/10 = 80% — exactly on the threshold. ≥0.80 fires B12.
+        # With aggregate B7, ensure each venture has ≥ aggregate manual events:
+        # carbonv3: 8 P2 = 80 manual, needs ≥ 80 events. fultech/chief: 1 P2
+        # = 10 manual, needs ≥ 10 events.
         entries = (
             [make_entry("P2", venture="carbonv3") for _ in range(8)]
             + [make_entry("P2", venture="fultech")]
             + [make_entry("P2", venture="chief-of-staff")]
         )
-        events = [make_event(venture="carbonv3") for _ in range(50)]
-        # 10 P2 entries = 10 high_sev, passes gate. 50 events, passes.
-        # B7: per-entry check. carbonv3 P2 score 10 vs 50 events for carbonv3 → 10 < 50 → false.
-        # P2 in fultech: 0 events → "P2 with no events at all" → B7 fires.
-        # So B7 wins before B12. Adjust: spread events to non-zero coverage for non-carbonv3.
         events = (
-            [make_event(venture="carbonv3") for _ in range(40)]
-            + [make_event(venture="fultech") for _ in range(5)]
-            + [make_event(venture="chief-of-staff") for _ in range(5)]
+            [make_event(venture="carbonv3") for _ in range(80)]
+            + [make_event(venture="fultech") for _ in range(10)]
+            + [make_event(venture="chief-of-staff") for _ in range(10)]
         )
-        # B7: P2 in carbonv3 = 10 < 40 events → false. P2 in fultech = 10 vs 5 events → false (not "no events").
-        # Falls through to B12. cluster ratio 8/10 = 0.80 → fires B12.
-        result = decide(entries, events, fresh_event_stats(parsed=50), 1)
+        # 10 high_sev ≥ 5, 100 events ≥ 30 → through volume gate.
+        # B7 aggregate: carbonv3 80 ≤ 80, fultech 10 ≤ 10, chief 10 ≤ 10 → no B7.
+        # cluster 8/10 = 0.80 → B12 fires.
+        result = decide(entries, events, fresh_event_stats(parsed=100), 1)
         assert result == Branch.B12_CLUSTER_ONE_VENTURE
 
     def test_default_top_2_p1_with_event_support(self) -> None:
@@ -316,73 +324,221 @@ class TestBranchTree:
 
 class TestBoundaries:
     def test_b1_volume_gate_below(self) -> None:
-        # 4 P1+P2 entries, 30 events → high_sev < 5 fires B1
-        entries = [make_entry("P2") for _ in range(4)]
-        events = [make_event(venture="carbonv3") for _ in range(30)]
-        result = decide(entries, events, fresh_event_stats(parsed=30), 1)
-        # P2 score 10 vs 30 events → B7 false. Through to volume gate. high_sev=4 < 5 → B1.
-        assert result == Branch.B1_EXTEND_NO_DATA
-
-    def test_b1_volume_gate_above(self) -> None:
-        entries = [make_entry("P2") for _ in range(5)]
-        events = [make_event(venture="carbonv3") for _ in range(30)]
-        # high_sev=5 passes, events=30 passes. Cluster all carbonv3 → 5/5 = 100% → B12.
-        # Spread:
+        # 4 P2 entries spread across 4 ventures, each venture ≥ 11 events
+        # (≥ aggregate P2 score 10). high_sev=4 < 5 → B1. No B7 because
+        # per-venture aggregate ≤ events.
         entries = [
             make_entry("P2", venture="carbonv3"),
             make_entry("P2", venture="fultech"),
             make_entry("P2", venture="chief-of-staff"),
             make_entry("P2", venture="port-analytics"),
-            make_entry("P2", venture="carbonv3"),
         ]
-        events = [make_event(venture="carbonv3") for _ in range(30)]
-        # B7: P2 score 10 in carbonv3 (15 events split across multiple non-existent in events) — wait
-        # all events are venture="carbonv3" here. So P2 in fultech with 0 events → B7 fires.
-        # Adjust: every venture in entries also has events.
         events = (
-            [make_event(venture="carbonv3") for _ in range(8)]
-            + [make_event(venture="fultech") for _ in range(8)]
-            + [make_event(venture="chief-of-staff") for _ in range(8)]
-            + [make_event(venture="port-analytics") for _ in range(6)]
+            [make_event(venture="carbonv3") for _ in range(15)]
+            + [make_event(venture="fultech") for _ in range(15)]
+            + [make_event(venture="chief-of-staff") for _ in range(15)]
+            + [make_event(venture="port-analytics") for _ in range(15)]
         )
-        # 30 events total, distributed. P2 fultech score 10 vs 8 events: 10 > 8 → P1 only check, false.
-        # P2 with no events: every venture has events. B7 false.
-        # Through volume gate (5 ≥ 5, 30 ≥ 30). Cluster: 2/5 = 40% < 80%. No panel.
-        # Divergence: top by manual = first encountered (5 ventures with score 10 each). Stable.
-        # → DEFAULT
-        result = decide(entries, events, fresh_event_stats(parsed=30), 1)
+        result = decide(entries, events, fresh_event_stats(parsed=60), 1)
+        assert result == Branch.B1_EXTEND_NO_DATA
+
+    def test_b1_volume_gate_above(self) -> None:
+        # 5 P2s in 5 ventures, each venture with ≥ 11 events (P2 aggregate
+        # is 10 per venture). 5 high_sev ≥ 5, total events ≥ 30 → through
+        # volume gate. Cluster: 1/5=20% < 80%. No panel keywords. No
+        # divergence. No architectural conflict. → DEFAULT.
+        entries = [
+            make_entry("P2", venture="carbonv3"),
+            make_entry("P2", venture="fultech"),
+            make_entry("P2", venture="chief-of-staff"),
+            make_entry("P2", venture="port-analytics"),
+            make_entry("P2", venture="other"),
+        ]
+        events = (
+            [make_event(venture="carbonv3") for _ in range(11)]
+            + [make_event(venture="fultech") for _ in range(11)]
+            + [make_event(venture="chief-of-staff") for _ in range(11)]
+            + [make_event(venture="port-analytics") for _ in range(11)]
+            + [make_event(venture="other") for _ in range(11)]
+        )
+        # 55 events, 5 high_sev, all aggregates 10 ≤ 11 → no B7.
+        result = decide(entries, events, fresh_event_stats(parsed=55), 1)
         assert result == Branch.DEFAULT_PHASE_14_CANDIDATES
 
     def test_b12_cluster_at_80(self) -> None:
-        # 8/10 = 0.80 — exactly on threshold, should fire B12
+        # 8/10 = 0.80 — exactly on threshold, should fire B12.
+        # Per-venture aggregate P2 must be ≤ events to skip B7.
         entries = (
             [make_entry("P2", venture="carbonv3") for _ in range(8)]
             + [make_entry("P2", venture="fultech")]
             + [make_entry("P2", venture="chief-of-staff")]
         )
-        # Need every venture to have events to avoid B7
+        # carbonv3 aggregate 80, fultech 10, chief 10
         events = (
-            [make_event(venture="carbonv3") for _ in range(20)]
-            + [make_event(venture="fultech") for _ in range(15)]
-            + [make_event(venture="chief-of-staff") for _ in range(15)]
+            [make_event(venture="carbonv3") for _ in range(80)]
+            + [make_event(venture="fultech") for _ in range(10)]
+            + [make_event(venture="chief-of-staff") for _ in range(10)]
         )
-        result = decide(entries, events, fresh_event_stats(parsed=50), 1)
+        result = decide(entries, events, fresh_event_stats(parsed=100), 1)
         assert result == Branch.B12_CLUSTER_ONE_VENTURE
 
     def test_b12_cluster_below_80(self) -> None:
-        # 7/10 = 0.70 — below threshold
+        # 7/10 = 0.70 — below threshold. Aggregate manual ≤ events per venture.
         entries = (
             [make_entry("P2", venture="carbonv3") for _ in range(7)]
             + [make_entry("P2", venture="fultech") for _ in range(2)]
             + [make_entry("P2", venture="chief-of-staff")]
         )
         events = (
-            [make_event(venture="carbonv3") for _ in range(20)]
+            [make_event(venture="carbonv3") for _ in range(70)]
+            + [make_event(venture="fultech") for _ in range(20)]
+            + [make_event(venture="chief-of-staff") for _ in range(10)]
+        )
+        result = decide(entries, events, fresh_event_stats(parsed=100), 1)
+        assert result != Branch.B12_CLUSTER_ONE_VENTURE
+
+
+# -----------------------------------------------------------------------------
+# Branches B3, B4, B10 — codex caught these were not actually exercised in the
+# original suite (existing tests asserted detector logic directly OR the tree
+# returned B7 first). These tests construct conditions where B7 doesn't fire,
+# so the tree reaches B3/B4/B10.
+# -----------------------------------------------------------------------------
+
+
+class TestB3DivergenceTriggers:
+    def test_b3_top_manual_venture_not_in_top_2_events(self) -> None:
+        # Manual: top by weighted_score is fultech (1 P2 = 10).
+        # Events: top-2 by count are carbonv3 (50) + chief-of-staff (40);
+        # fultech NOT in top-2. Per-venture aggregate (fultech=10, fultech
+        # events=20) means 10 ≤ 20 → no B7. high_sev=1 < 5 → uh, volume gate
+        # fires before B3. Need to pass volume gate. Add 4 more P2s in
+        # ventures that have plenty of events too.
+        entries = [
+            make_entry("P2", venture="fultech"),
+            make_entry("P2", venture="carbonv3"),
+            make_entry("P2", venture="carbonv3"),
+            make_entry("P2", venture="chief-of-staff"),
+            make_entry("P2", venture="chief-of-staff"),
+        ]
+        # Top by manual aggregate: carbonv3 (20) and chief (20) tied with
+        # fultech (10) at 3rd. So fultech is NOT top-by-manual. Adjust:
+        entries = [
+            make_entry("P2", venture="fultech"),
+            make_entry("P2", venture="fultech"),
+            make_entry("P2", venture="fultech"),
+            make_entry("P2", venture="carbonv3"),
+            make_entry("P2", venture="chief-of-staff"),
+        ]
+        # Aggregate: fultech=30, carbonv3=10, chief=10
+        # Events: carbonv3=50, chief=40, fultech=35 (fultech needs ≥30 to avoid B7)
+        # Top-2 by event count: carbonv3, chief. fultech NOT in top-2.
+        events = (
+            [make_event(venture="carbonv3") for _ in range(50)]
+            + [make_event(venture="chief-of-staff") for _ in range(40)]
+            + [make_event(venture="fultech") for _ in range(35)]
+        )
+        # high_sev=5 ≥ 5, events=125 ≥ 30 → through volume gate.
+        # Aggregate B7: fultech 30 ≤ 35, others smaller → no B7.
+        # Cluster: 3/5=60% < 80%, no B12.
+        # Panel keywords absent → no B4.
+        # B3 divergence: top-by-manual=fultech, top-2-by-events=carbonv3+chief
+        # → fultech NOT in top-2 → B3 fires.
+        result = decide(entries, events, fresh_event_stats(parsed=125), 1)
+        assert result == Branch.B3_DIVERGENCE
+
+
+class TestB4PanelDerivation:
+    def test_b4_re_derives_panel_keywords_dominate(self) -> None:
+        # Need ≥50% of high_sev entries to mention panel keywords AND
+        # avoid B7 + B12 + B3.
+        entries = [
+            make_entry(
+                "P2",
+                venture="carbonv3",
+                what_i_tried="needed cmd+k quick launch for dispatch",
+            ),
+            make_entry(
+                "P2",
+                venture="fultech",
+                what_i_tried="ranked inbox would help triage",
+            ),
+            make_entry(
+                "P2",
+                venture="chief-of-staff",
+                what_i_tried="campaign chain for plan-implement-review",
+            ),
+            make_entry(
+                "P2",
+                venture="port-analytics",
+                what_i_tried="diff control deck for reviewing changes",
+            ),
+            make_entry(
+                "P2",
+                venture="other",
+                what_i_tried="something unrelated",
+                what_blocked="generic blocker",
+            ),
+        ]
+        # Aggregate per venture: each = 10. Events ≥ 11 per venture.
+        events = (
+            [make_event(venture="carbonv3") for _ in range(15)]
             + [make_event(venture="fultech") for _ in range(15)]
             + [make_event(venture="chief-of-staff") for _ in range(15)]
+            + [make_event(venture="port-analytics") for _ in range(15)]
+            + [make_event(venture="other") for _ in range(15)]
         )
-        result = decide(entries, events, fresh_event_stats(parsed=50), 1)
-        assert result != Branch.B12_CLUSTER_ONE_VENTURE
+        # 5 high_sev ≥ 5, 75 events ≥ 30. No B7 (each venture 10 ≤ 15).
+        # Cluster 1/5=20%. No divergence (top manual=carbonv3 tied, top-2 events covers it).
+        # Panel keywords: 4/5 mention panel-list keywords (cmd+k, ranked inbox,
+        # campaign chain, diff control deck) → 80% ≥ 50% → B4 fires.
+        result = decide(entries, events, fresh_event_stats(parsed=75), 1)
+        assert result == Branch.B4_RE_DERIVES_PANEL
+
+
+class TestB10ArchitecturalConflict:
+    def test_b10_top_2_p1s_in_different_layers(self) -> None:
+        # Top-2 P1s in different layers. Need:
+        # - 2 P1s, different ventures, each venture with ≥ 30 events (P1=30
+        #   aggregate → events must be ≥ 30 for no-B7)
+        # - Layer of P1[0] != layer of P1[1]
+        # - 5 high_sev to pass volume gate
+        # - No clustering, no panel keywords, no divergence
+        entries = [
+            make_entry(
+                "P1",
+                venture="carbonv3",
+                layer="cockpit-ui",
+                what_i_tried="thing A",
+            ),
+            make_entry(
+                "P1",
+                venture="fultech",
+                layer="cockpit-coord",
+                what_i_tried="thing B",
+            ),
+            make_entry("P2", venture="chief-of-staff", layer="agent"),
+            make_entry("P2", venture="port-analytics", layer="agent"),
+            make_entry("P2", venture="carbonv3", layer="external"),
+        ]
+        # carbonv3 aggregate: 30 + 10 = 40, needs ≥ 40 events
+        # fultech: 30, needs ≥ 30
+        # chief: 10, needs ≥ 10
+        # port-analytics: 10, needs ≥ 10
+        events = (
+            [make_event(venture="carbonv3") for _ in range(40)]
+            + [make_event(venture="fultech") for _ in range(30)]
+            + [make_event(venture="chief-of-staff") for _ in range(15)]
+            + [make_event(venture="port-analytics") for _ in range(15)]
+        )
+        # No B7 (all aggregates ≤ events). 5 high_sev ≥ 5, 100 events ≥ 30.
+        # Cluster: max 2/5 = 40% < 80%. No panel keywords. Divergence:
+        # top by manual is carbonv3 (40), top-2 by events = carbonv3 (40)
+        # + fultech (30) → carbonv3 IS in top-2 → no B3.
+        # B10: top-2 P1 by score = carbonv3-cockpit-ui (30) + fultech-cockpit-coord (30).
+        # Different layers → B10 fires.
+        result = decide(entries, events, fresh_event_stats(parsed=100), 1)
+        assert result == Branch.B10_DREAM_STATE
 
 
 # -----------------------------------------------------------------------------
