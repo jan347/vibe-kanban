@@ -14,6 +14,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppWorkspacesRouteImport } from './routes/_app.workspaces'
 import { Route as AppNotificationsRouteImport } from './routes/_app.notifications'
 import { Route as AppMailRouteImport } from './routes/_app.mail'
+import { Route as AppFrictionRouteImport } from './routes/_app.friction'
 import { Route as AppAutomationRouteImport } from './routes/_app.automation'
 import { Route as WorkspacesWorkspaceIdVscodeRouteImport } from './routes/workspaces.$workspaceId.vscode'
 import { Route as AppWorkspacesCreateRouteImport } from './routes/_app.workspaces_.create'
@@ -46,6 +47,11 @@ const AppNotificationsRoute = AppNotificationsRouteImport.update({
 const AppMailRoute = AppMailRouteImport.update({
   id: '/mail',
   path: '/mail',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppFrictionRoute = AppFrictionRouteImport.update({
+  id: '/friction',
+  path: '/friction',
   getParentRoute: () => AppRoute,
 } as any)
 const AppAutomationRoute = AppAutomationRouteImport.update({
@@ -103,6 +109,7 @@ const AppHostsHostIdWorkspacesWorkspaceIdRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/automation': typeof AppAutomationRoute
+  '/friction': typeof AppFrictionRoute
   '/mail': typeof AppMailRouteWithChildren
   '/notifications': typeof AppNotificationsRoute
   '/workspaces': typeof AppWorkspacesRoute
@@ -118,6 +125,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/automation': typeof AppAutomationRoute
+  '/friction': typeof AppFrictionRoute
   '/mail': typeof AppMailRouteWithChildren
   '/notifications': typeof AppNotificationsRoute
   '/workspaces': typeof AppWorkspacesRoute
@@ -135,6 +143,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_app': typeof AppRouteWithChildren
   '/_app/automation': typeof AppAutomationRoute
+  '/_app/friction': typeof AppFrictionRoute
   '/_app/mail': typeof AppMailRouteWithChildren
   '/_app/notifications': typeof AppNotificationsRoute
   '/_app/workspaces': typeof AppWorkspacesRoute
@@ -152,6 +161,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/automation'
+    | '/friction'
     | '/mail'
     | '/notifications'
     | '/workspaces'
@@ -167,6 +177,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/automation'
+    | '/friction'
     | '/mail'
     | '/notifications'
     | '/workspaces'
@@ -183,6 +194,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_app'
     | '/_app/automation'
+    | '/_app/friction'
     | '/_app/mail'
     | '/_app/notifications'
     | '/_app/workspaces'
@@ -238,6 +250,13 @@ declare module '@tanstack/react-router' {
       path: '/mail'
       fullPath: '/mail'
       preLoaderRoute: typeof AppMailRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/friction': {
+      id: '/_app/friction'
+      path: '/friction'
+      fullPath: '/friction'
+      preLoaderRoute: typeof AppFrictionRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/automation': {
@@ -319,6 +338,7 @@ const AppMailRouteWithChildren =
 
 interface AppRouteChildren {
   AppAutomationRoute: typeof AppAutomationRoute
+  AppFrictionRoute: typeof AppFrictionRoute
   AppMailRoute: typeof AppMailRouteWithChildren
   AppNotificationsRoute: typeof AppNotificationsRoute
   AppWorkspacesRoute: typeof AppWorkspacesRoute
@@ -331,6 +351,7 @@ interface AppRouteChildren {
 
 const AppRouteChildren: AppRouteChildren = {
   AppAutomationRoute: AppAutomationRoute,
+  AppFrictionRoute: AppFrictionRoute,
   AppMailRoute: AppMailRouteWithChildren,
   AppNotificationsRoute: AppNotificationsRoute,
   AppWorkspacesRoute: AppWorkspacesRoute,

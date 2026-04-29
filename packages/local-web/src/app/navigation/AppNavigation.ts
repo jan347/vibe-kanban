@@ -42,6 +42,8 @@ function resolveLocalDestinationFromPath(path: string): AppDestination | null {
       return { kind: 'automation' };
     case '/_app/mail':
       return { kind: 'mail' };
+    case '/_app/friction':
+      return { kind: 'friction' };
     case '/_app/hosts/$hostId/workspaces': {
       const hostId = getPathParam(routeParams, 'hostId');
       return hostId ? { kind: 'workspaces', hostId } : null;
@@ -138,6 +140,8 @@ function destinationToLocalTarget(
       return { to: '/automation' } as const;
     case 'mail':
       return { to: '/mail' } as const;
+    case 'friction':
+      return { to: '/friction' } as const;
   }
 }
 
@@ -173,6 +177,8 @@ export function createLocalAppNavigation(): AppNavigation {
     goToAutomation: (transition) =>
       navigateTo({ kind: 'automation' }, transition),
     goToMail: (transition) => navigateTo({ kind: 'mail' }, transition),
+    goToFriction: (transition) =>
+      navigateTo({ kind: 'friction' }, transition),
   };
 
   return navigation;

@@ -76,8 +76,13 @@ export function SharedAppLayout() {
     appNavigation.goToMail();
   }, [appNavigation]);
 
+  const handleFrictionClick = useCallback(() => {
+    appNavigation.goToFriction();
+  }, [appNavigation]);
+
   const isAutomationActive = currentDestination?.kind === 'automation';
   const isMailActive = currentDestination?.kind === 'mail';
+  const isFrictionActive = currentDestination?.kind === 'friction';
 
   return (
     <SyncErrorProvider>
@@ -104,9 +109,11 @@ export function SharedAppLayout() {
               onWorkspacesClick={handleWorkspacesClick}
               onAutomationClick={handleAutomationClick}
               onMailClick={handleMailClick}
+              onFrictionClick={handleFrictionClick}
               isWorkspacesActive={isWorkspacesActive}
               isAutomationActive={isAutomationActive}
               isMailActive={isMailActive}
+              isFrictionActive={isFrictionActive}
               onHoverStart={() => setIsAppBarHovered(true)}
               onHoverEnd={() => setIsAppBarHovered(false)}
               notificationBell={undefined}

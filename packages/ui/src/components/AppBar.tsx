@@ -3,6 +3,7 @@ import {
   LayoutIcon,
   EnvelopeIcon,
   RobotIcon,
+  WarningIcon,
   type Icon,
 } from '@phosphor-icons/react';
 import { cn } from '../lib/cn';
@@ -23,6 +24,8 @@ interface AppBarProps {
   isAutomationActive?: boolean;
   onMailClick?: () => void;
   isMailActive?: boolean;
+  onFrictionClick?: () => void;
+  isFrictionActive?: boolean;
 }
 
 // Retained as a re-exported type so WorkspacesSidebar / SharedAppLayout
@@ -87,6 +90,8 @@ export function AppBar({
   isAutomationActive = false,
   onMailClick,
   isMailActive = false,
+  onFrictionClick,
+  isFrictionActive = false,
   appVersion,
   updateVersion,
   onUpdateClick,
@@ -122,6 +127,16 @@ export function AppBar({
         icon: EnvelopeIcon,
         isActive: isMailActive,
         onClick: onMailClick,
+      });
+    }
+    if (onFrictionClick) {
+      localItems.push({
+        key: 'friction',
+        kind: 'icon-button',
+        label: 'Friction Log',
+        icon: WarningIcon,
+        isActive: isFrictionActive,
+        onClick: onFrictionClick,
       });
     }
     sections.push({ key: 'local', label: 'Local', items: localItems });

@@ -5,7 +5,8 @@ export type AppDestination =
   | { kind: 'workspace'; workspaceId: string; hostId?: string }
   | { kind: 'workspace-vscode'; workspaceId: string; hostId?: string }
   | { kind: 'automation' }
-  | { kind: 'mail' };
+  | { kind: 'mail' }
+  | { kind: 'friction' };
 
 export type NavigationTransition = {
   replace?: boolean;
@@ -23,6 +24,7 @@ export interface AppNavigation {
   ): void;
   goToAutomation(transition?: NavigationTransition): void;
   goToMail(transition?: NavigationTransition): void;
+  goToFriction(transition?: NavigationTransition): void;
 }
 
 type WorkspaceDestinationKind =

@@ -1,4 +1,10 @@
 import { useMemo, useCallback, useState, useEffect } from 'react';
+import {
+  KNOWN_VENTURES,
+  loadLastVenture,
+  saveLastVenture,
+  type VentureSelection,
+} from '@/shared/lib/venture';
 import { useTranslation } from 'react-i18next';
 import { useDropzone } from 'react-dropzone';
 import { useCreateMode } from '@/features/create-mode/model/useCreateMode';
@@ -62,6 +68,20 @@ export function CreateChatBoxContainer({
   const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
   const [hasInitializedStep, setHasInitializedStep] = useState(false);
   const [isSelectingRepos, setIsSelectingRepos] = useState(true);
+
+  // D-AUTO-4: per-workspace venture tag for friction-log slicing.
+  // Required on create. localStorage carries the last-used pick across
+  // sessions so the operator doesn't repeatedly select the same value.
+  const [ventureSelection, setVentureSelection] = useState<VentureSelection>(
+    () => loadLastVenture()
+  );
+  const [ventureCustom, setVentureCustom] = useState<string>('');
+  const ventureValue: string | null =
+    ventureSelection === null
+      ? null
+      : ventureSelection === 'other'
+        ? ventureCustom.trim() || null
+        : ventureSelection;
 
   useEffect(() => {
     if (!hasInitialValue || hasInitializedStep) return;
@@ -164,12 +184,15 @@ export function CreateChatBoxContainer({
     (repo) => !!targetBranches[repo.id]
   );
 
-  // Determine if we can submit
+  // Determine if we can submit. D-AUTO-4 requires a non-null venture on
+  // new creates; the empty-other case (selection = "other" but no custom
+  // text typed) blocks submit, mirroring how the unselected case does.
   const canSubmit =
     hasSelectedRepos &&
     hasSelectedBranchesForAllRepos &&
     message.trim().length > 0 &&
-    effectiveExecutor !== null;
+    effectiveExecutor !== null &&
+    ventureValue !== null;
 
   const handlePresetSelect = (presetId: string | null) => {
     if (!effectiveExecutor) return;
@@ -240,7 +263,11 @@ export function CreateChatBoxContainer({
           }
         : null,
       attachment_ids: getAttachmentIds(),
+      venture: ventureValue,
     };
+    if (ventureValue) {
+      saveLastVenture(ventureSelection);
+    }
     const linkToIssue = linkedIssue
       ? {
           remoteProjectId: linkedIssue.remoteProjectId,
@@ -271,6 +298,8 @@ export function CreateChatBoxContainer({
     clearAttachments,
     clearDraft,
     linkedIssue,
+    ventureValue,
+    ventureSelection,
   ]);
 
   // Determine error to display
@@ -279,11 +308,13 @@ export function CreateChatBoxContainer({
       ? 'Add at least one repository to create a workspace'
       : hasAttemptedSubmit && !hasSelectedBranchesForAllRepos
         ? 'Select a branch for every repository before creating a workspace'
-        : createWorkspace.error
-          ? createWorkspace.error instanceof Error
-            ? createWorkspace.error.message
-            : 'Failed to create workspace'
-          : null;
+        : hasAttemptedSubmit && ventureValue === null
+          ? 'Pick a venture so this workspace appears in the friction log'
+          : createWorkspace.error
+            ? createWorkspace.error instanceof Error
+              ? createWorkspace.error.message
+              : 'Failed to create workspace'
+            : null;
 
   // Wait for initial value to be applied before rendering
   // This ensures the editor mounts with content ready, so autoFocus works correctly
@@ -311,6 +342,51 @@ export function CreateChatBoxContainer({
               <h2 className="mb-double text-center text-4xl font-medium tracking-tight text-high">
                 {t('createMode.headings.chatStep')}
               </h2>
+
+              <div className="flex flex-col gap-1">
+                <label
+                  htmlFor="workspace-venture-select"
+                  className="text-base font-medium text-high"
+                >
+                  Venture
+                </label>
+                <select
+                  id="workspace-venture-select"
+                  value={ventureSelection ?? ''}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    if (v === '') {
+                      setVentureSelection(null);
+                    } else if (v === 'other') {
+                      setVentureSelection('other');
+                    } else {
+                      setVentureSelection(v as (typeof KNOWN_VENTURES)[number]);
+                    }
+                  }}
+                  className="rounded-sm border border-secondary bg-secondary px-base py-1 text-base text-normal focus:outline-none focus:ring-1 focus:ring-brand"
+                >
+                  <option value="">(none)</option>
+                  {KNOWN_VENTURES.map((v) => (
+                    <option key={v} value={v}>
+                      {v}
+                    </option>
+                  ))}
+                  <option value="other">other…</option>
+                </select>
+                {ventureSelection === 'other' && (
+                  <input
+                    type="text"
+                    aria-label="Custom venture name"
+                    value={ventureCustom}
+                    onChange={(e) => setVentureCustom(e.target.value)}
+                    placeholder="Custom venture name"
+                    className="mt-1 rounded-sm border border-secondary bg-secondary px-base py-1 text-base text-normal placeholder:text-low focus:outline-none focus:ring-1 focus:ring-brand"
+                  />
+                )}
+                <span className="text-xs text-low">
+                  Used for friction-log slicing.
+                </span>
+              </div>
 
               <div className="flex justify-center @container">
                 <CreateChatBox
