@@ -1,3 +1,23 @@
+> **🧪 ACTIVE EXPERIMENT (2026-04-29 → 2026-05-02):** 3-day friction-log discipline.
+> No feature code Phase 14-18 until day-3 candidate output + cycle-2 validation.
+>
+> **Off-ramp allowlist** (fix only these triggers, see thresholds in design doc):
+> - supervisor-crash, app-won't-boot, can't-create-workspace, can't-dispatch
+> Everything else: `gencap log` then continue (do NOT roll back).
+>
+> **Daily commands:**
+> - `gencap log` — capture a friction event
+> - `gencap status` — current experiment state
+> - `gencap extend --days N` — extend if data is thin
+> - `gencap teardown` — end experiment cleanly
+>
+> **Kill switch:** `GENCAP_FRICTION_ENABLED=0` — emitter no-ops without rebuild.
+>
+> **Day-3 output:** `docs/designs/phase-14-candidates.md` (auto-written by `python scripts/reread.py`)
+>
+> **Full spec:** `docs/designs/friction-log-discipline.md`
+> **Schema:** `docs/designs/friction-log-schema.md`
+
 # Repository Guidelines
 
 ## Project Structure & Module Organization

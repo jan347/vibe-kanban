@@ -11,6 +11,35 @@ Repo: jan347/vibe-kanban
 Reviews source design doc: `~/.gstack/projects/vibe-kanban/jena-personal-design-20260428-155436.md`
 Spec review iteration: 2 (15 prior issues fixed in iter 1, 4 minor new issues fixed in iter 2)
 
+## Operator Quickstart
+
+```bash
+# Setup (one-time, idempotent)
+bash scripts/bootstrap-friction.sh
+
+# Daily use
+gencap log                      # interactive prompt
+gencap log --quick "what hurt"  # terse capture
+gencap status                   # current state
+
+# Mid-experiment
+gencap extend --days 2          # if day-3 data is thin
+
+# Day 3
+python scripts/reread.py        # read both stores, write candidates
+open docs/designs/phase-14-candidates.md
+
+# Day 4
+gencap teardown                 # archive + cleanup
+
+# Kill switch (no rebuild needed)
+GENCAP_FRICTION_ENABLED=0 [...]
+```
+
+**Off-ramp:** if supervisor-crash, app-won't-boot, can't-create-workspace, or can't-dispatch (see thresholds in D3 below), fix is allowed. Everything else: log + continue.
+
+**Day-3 output:** `docs/designs/phase-14-candidates.md` (auto-written; Phase 14 CANDIDATES, not commitment — validation in cycle-2).
+
 ## Vision
 
 ### What this plan IS
