@@ -12,10 +12,14 @@ use std::time::Duration;
 
 use db::models::dispatch::CreateDispatch;
 use serde::Deserialize;
+use serde_json::json;
 use sqlx::SqlitePool;
 use uuid::Uuid;
 
-use crate::services::dispatch_guard::{GatedDispatchResult, gated_create_dispatch};
+use crate::services::{
+    dispatch_guard::{GatedDispatchResult, gated_create_dispatch},
+    friction_emitter,
+};
 
 const POLL_INTERVAL: Duration = Duration::from_secs(30);
 
@@ -111,6 +115,20 @@ async fn tick(pool: &SqlitePool) -> Result<(), sqlx::Error> {
         )
         .execute(pool)
         .await?;
+
+        // Friction-log emit AFTER the last_fired_at UPDATE commits (E-AUTO-1).
+        // Fired regardless of supervisor outcome — the rule attempted to run,
+        // which is the chokepoint signal we care about for the friction log.
+        friction_emitter::emit_for_workspace(
+            pool,
+            "automation.fire",
+            r.workspace_id,
+            json!({
+                "rule_id": r.id.simple().to_string(),
+                "rule_name": r.name,
+            }),
+        )
+        .await;
 
         match outcome {
             Ok(GatedDispatchResult::Approved(row)) => {

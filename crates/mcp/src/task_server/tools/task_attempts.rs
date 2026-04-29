@@ -190,6 +190,10 @@ impl McpServer {
             },
             prompt: workspace_prompt,
             attachment_ids: None,
+            // MCP-driven workspace creation has no user-tagged venture
+            // context; the friction-log experiment treats null venture
+            // as "(none)" / pre-experiment.
+            venture: None,
         };
 
         let create_and_start_url = self.url("/api/workspaces/start");

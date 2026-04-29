@@ -13,8 +13,11 @@
 
 use db::models::safety::{AutoApprovalDecision, AutoApprovalRequest, SafetyConfig};
 use serde::Deserialize;
+use serde_json::json;
 use sqlx::SqlitePool;
 use uuid::Uuid;
+
+use crate::services::friction_emitter;
 
 const ANTHROPIC_API_URL: &str = "https://api.anthropic.com/v1/messages";
 const ANTHROPIC_API_VERSION: &str = "2023-06-01";
@@ -147,6 +150,10 @@ pub async fn evaluate_and_log(
         )
         .execute(pool)
         .await?;
+        // Rate-limit returns "escalated" — emit nothing. Only terminal
+        // approve/deny decisions are friction-event-worthy. (See
+        // friction-log-schema.md event enum: supervisor.evaluate.grant
+        // and supervisor.evaluate.deny only.)
         return Ok(decision);
     }
 
@@ -222,6 +229,29 @@ pub async fn evaluate_and_log(
     .execute(&mut *tx)
     .await?;
     tx.commit().await?;
+
+    // Friction-log emit AFTER commit (E-AUTO-1: never inside a tx — a
+    // rolled-back tx must not leak an event). Only emit terminal
+    // approve/deny. The escalated path is a "no decision yet" — let the
+    // human resolution step (resolve_auto_approval) emit instead.
+    let event_name = match decision.decision.as_str() {
+        "approved" => Some("supervisor.evaluate.grant"),
+        "denied" => Some("supervisor.evaluate.deny"),
+        _ => None,
+    };
+    if let Some(event) = event_name {
+        friction_emitter::emit_for_workspace(
+            pool,
+            event,
+            workspace_id,
+            json!({
+                "action_kind": req.action_kind,
+                "decided_by": decision.decided_by,
+                "approval_id": approval_id,
+            }),
+        )
+        .await;
+    }
 
     Ok(decision)
 }

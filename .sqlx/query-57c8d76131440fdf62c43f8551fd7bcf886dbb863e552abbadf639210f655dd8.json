@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT venture FROM workspaces WHERE id = ?1",
+  "describe": {
+    "columns": [
+      {
+        "name": "venture",
+        "ordinal": 0,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      true
+    ]
+  },
+  "hash": "57c8d76131440fdf62c43f8551fd7bcf886dbb863e552abbadf639210f655dd8"
+}

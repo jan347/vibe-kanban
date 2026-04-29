@@ -1,0 +1,12 @@
+-- Friction-log discipline: per-workspace venture attribution.
+--
+-- Nullable on purpose so existing 33+ workspaces stay valid.
+-- UI requires venture on new creates (D-AUTO-4 + E-AUTO-8); UI accepts null on edit.
+-- Friction emitter (crates/services/src/services/friction_emitter.rs) reads
+-- workspaces.venture at emit time so each event inherits the venture tag for
+-- per-venture slicing at day-3 reread.
+--
+-- Allowed values are validated in the UI / request types; the column accepts
+-- arbitrary text so the "other" branch (free-text venture) works without
+-- another migration. See docs/designs/friction-log-discipline.md D-AUTO-4.
+ALTER TABLE workspaces ADD COLUMN venture TEXT;

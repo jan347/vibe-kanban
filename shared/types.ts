@@ -152,9 +152,23 @@ export type CreateScratch = { payload: ScratchPayload, };
 
 export type UpdateScratch = { payload: ScratchPayload, };
 
-export type Workspace = { id: string, task_id: string | null, container_ref: string | null, branch: string, setup_completed_at: string | null, created_at: string, updated_at: string, archived: boolean, pinned: boolean, name: string | null, worktree_deleted: boolean, };
+export type Workspace = { id: string, task_id: string | null, container_ref: string | null, branch: string, setup_completed_at: string | null, created_at: string, updated_at: string, archived: boolean, pinned: boolean, name: string | null, worktree_deleted: boolean, 
+/**
+ * Friction-log discipline (docs/designs/friction-log-discipline.md):
+ * per-workspace venture tag for friction-log slicing. Nullable so
+ * pre-experiment workspaces stay valid; UI requires this on new
+ * creates, allows null on edits.
+ */
+venture: string | null, };
 
-export type WorkspaceWithStatus = { is_running: boolean, is_errored: boolean, id: string, task_id: string | null, container_ref: string | null, branch: string, setup_completed_at: string | null, created_at: string, updated_at: string, archived: boolean, pinned: boolean, name: string | null, worktree_deleted: boolean, };
+export type WorkspaceWithStatus = { is_running: boolean, is_errored: boolean, id: string, task_id: string | null, container_ref: string | null, branch: string, setup_completed_at: string | null, created_at: string, updated_at: string, archived: boolean, pinned: boolean, name: string | null, worktree_deleted: boolean, 
+/**
+ * Friction-log discipline (docs/designs/friction-log-discipline.md):
+ * per-workspace venture tag for friction-log slicing. Nullable so
+ * pre-experiment workspaces stay valid; UI requires this on new
+ * creates, allows null on edits.
+ */
+venture: string | null, };
 
 export type Session = { id: string, workspace_id: string, name: string | null, executor: string | null, agent_working_dir: string | null, created_at: string, updated_at: string, };
 
@@ -272,6 +286,53 @@ export type AutoApprovalDecision = { approved: boolean, decision: string, reason
 
 export type ResolveAutoApprovalRequest = { decision: string, };
 
+export type FrictionSnapshot = { header: FrictionHeader, ventures: Array<VentureCard>, 
+/**
+ * `None` = pre-day-3 (candidates not yet generated). `Some(path)` =
+ * the absolute path the operator can open. UI uses presence as a
+ * boolean; path string is informational.
+ */
+day_3_status: string | null, 
+/**
+ * Count of malformed JSONL lines we skipped while reading. Surfaced
+ * in the dashboard so the operator notices data corruption early
+ * rather than discovering it at day-3 reread.
+ */
+skipped_lines: number, };
+
+export type FrictionHeader = { 
+/**
+ * Day N of 3, computed from `.experiment-start`. `0` when the
+ * marker is missing (pre-experiment state). Clamped to 1..=3
+ * otherwise so a stale marker on day 7 still displays as day 3.
+ */
+day_n: number, p1_count: number, p2_count: number, p3_count: number, event_count: number, last_entry_ts: string | null, last_event_ts: string | null, 
+/**
+ * Hours from now until day-3 09:00 UTC cutoff. Negative if past.
+ * `i32` (not `u32`) because the post-day-3 case is real and needs
+ * to be representable.
+ */
+hours_to_day_3: number, 
+/**
+ * ISO 8601 from `.experiment-start`, midnight UTC of the date in
+ * the marker. `None` when the marker is missing.
+ */
+experiment_start: string | null, };
+
+export type VentureCard = { venture: string, p1_count: number, p2_count: number, p3_count: number, event_count: number, time_lost_min_total: bigint, 
+/**
+ * `P1*30 + P2*10 + P3*1 + events*1.0` — drives the venture sort
+ * (descending). Per E-AUTO-3 weighting.
+ */
+weighted_score: number, latest_entry: LatestEntry | null, };
+
+export type LatestEntry = { ts: string, layer: string, severity: string, 
+/**
+ * Truncated to ~80 chars on a UTF-8 char boundary so multi-byte
+ * chars (emoji, accented Czech) don't produce invalid output.
+ */
+what_blocked: string, };
+
 export type AutomationRule = { id: string, workspace_id: string, work_item_id: string, name: string, trigger_kind: string, trigger_config: string, prompt_template_id: string | null, model_preset_id: string | null, prompt_override: string | null, enabled: boolean, last_fired_at: string | null, created_at: string, updated_at: string, };
 
 export type CreateAutomationRule = { workspace_id: string, work_item_id: string, name: string, trigger_kind: string, trigger_config: string | null, prompt_template_id: string | null, model_preset_id: string | null, prompt_override: string | null, };
@@ -372,7 +433,13 @@ export type OpenEditorRequest = { editor_type: string | null, file_path: string 
 
 export type OpenEditorResponse = { url: string | null, };
 
-export type CreateWorkspaceApiRequest = { name: string | null, };
+export type CreateWorkspaceApiRequest = { name: string | null, 
+/**
+ * Friction-log venture tag (chief-of-staff | carbonv3 | fultech |
+ * port-analytics | other). UI requires this on new creates;
+ * pre-experiment workspaces stay null.
+ */
+venture: string | null, };
 
 export type LinkedIssueInfo = { remote_project_id: string, issue_id: string, };
 
@@ -420,7 +487,11 @@ export type GetPrCommentsError = { "type": "no_pr_attached" } | { "type": "cli_n
 
 export type GetPrCommentsQuery = { repo_id: string, };
 
-export type CreateAndStartWorkspaceRequest = { name: string | null, repos: Array<WorkspaceRepoInput>, linked_issue: LinkedIssueInfo | null, executor_config: ExecutorConfig, prompt: string, attachment_ids: Array<string> | null, };
+export type CreateAndStartWorkspaceRequest = { name: string | null, repos: Array<WorkspaceRepoInput>, linked_issue: LinkedIssueInfo | null, executor_config: ExecutorConfig, prompt: string, attachment_ids: Array<string> | null, 
+/**
+ * Friction-log venture tag. See CreateWorkspaceApiRequest.
+ */
+venture: string | null, };
 
 export type CreateAndStartWorkspaceResponse = { workspace: Workspace, execution_process: ExecutionProcess, };
 
@@ -442,7 +513,12 @@ export type CreateFromPrError = { "type": "pr_not_found" } | { "type": "branch_f
 
 export type RepoBranchStatus = { repo_id: string, repo_name: string, commits_behind: number | null, commits_ahead: number | null, has_uncommitted_changes: boolean | null, head_oid: string | null, uncommitted_count: number | null, untracked_count: number | null, target_branch_name: string, remote_commits_behind: number | null, remote_commits_ahead: number | null, merges: Array<Merge>, is_rebase_in_progress: boolean, conflict_op: ConflictOp | null, conflicted_files: Array<string>, is_target_remote: boolean, };
 
-export type UpdateWorkspace = { archived: boolean | null, pinned: boolean | null, name: string | null, };
+export type UpdateWorkspace = { archived: boolean | null, pinned: boolean | null, name: string | null, 
+/**
+ * Friction-log venture tag. Optional on edit; null clears the tag,
+ * missing field leaves the existing value unchanged.
+ */
+venture?: string | null | null, };
 
 export type UpdateSession = { name: string | null, };
 

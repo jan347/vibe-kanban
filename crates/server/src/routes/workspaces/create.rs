@@ -6,7 +6,8 @@ use db::models::{
     workspace::{CreateWorkspace, Workspace},
 };
 use deployment::Deployment;
-use services::services::container::ContainerService;
+use serde_json::json;
+use services::services::{container::ContainerService, friction_emitter};
 use utils::response::ApiResponse;
 use uuid::Uuid;
 
@@ -15,6 +16,7 @@ use crate::{DeploymentImpl, error::ApiError};
 pub(crate) async fn create_workspace_record(
     deployment: &DeploymentImpl,
     name: Option<String>,
+    venture: Option<String>,
 ) -> Result<Workspace, ApiError> {
     let workspace_id = Uuid::new_v4();
     let branch_label = name
@@ -31,6 +33,7 @@ pub(crate) async fn create_workspace_record(
         &CreateWorkspace {
             branch: git_branch_name,
             name: name.filter(|workspace_name| !workspace_name.is_empty()),
+            venture: venture.filter(|v| !v.is_empty()),
         },
         workspace_id,
     )
@@ -43,7 +46,7 @@ pub async fn create_workspace(
     State(deployment): State<DeploymentImpl>,
     Json(payload): Json<CreateWorkspaceApiRequest>,
 ) -> Result<ResponseJson<ApiResponse<Workspace>>, ApiError> {
-    let workspace = create_workspace_record(&deployment, payload.name).await?;
+    let workspace = create_workspace_record(&deployment, payload.name, payload.venture).await?;
 
     deployment
         .track_if_analytics_allowed(
@@ -53,6 +56,18 @@ pub async fn create_workspace(
             }),
         )
         .await;
+
+    // Friction-log emit AFTER the workspace row commits (E-AUTO-1: never inside tx).
+    friction_emitter::emit_for_workspace(
+        &deployment.db().pool,
+        "workspace.create",
+        workspace.id,
+        json!({
+            "workspace_name": workspace.name,
+            "branch": workspace.branch,
+        }),
+    )
+    .await;
 
     Ok(ResponseJson(ApiResponse::success(workspace)))
 }
@@ -77,6 +92,7 @@ pub async fn create_and_start_workspace(
         executor_config,
         prompt,
         attachment_ids,
+        venture,
     } = payload;
 
     let workspace_prompt = normalize_prompt(&prompt).ok_or_else(|| {
@@ -93,7 +109,7 @@ pub async fn create_and_start_workspace(
 
     let mut managed_workspace = deployment
         .workspace_manager()
-        .load_managed_workspace(create_workspace_record(&deployment, name).await?)
+        .load_managed_workspace(create_workspace_record(&deployment, name, venture).await?)
         .await?;
 
     for repo in &repos {
@@ -127,6 +143,18 @@ pub async fn create_and_start_workspace(
             }),
         )
         .await;
+
+    // Friction-log emit AFTER the workspace row commits (E-AUTO-1: never inside tx).
+    friction_emitter::emit_for_workspace(
+        &deployment.db().pool,
+        "workspace.create",
+        workspace.id,
+        json!({
+            "workspace_name": workspace.name,
+            "branch": workspace.branch,
+        }),
+    )
+    .await;
 
     Ok(ResponseJson(ApiResponse::success(
         CreateAndStartWorkspaceResponse {

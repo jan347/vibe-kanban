@@ -20,6 +20,11 @@ pub struct WorkspaceRepoInput {
 #[derive(Debug, Serialize, Deserialize, TS)]
 pub struct CreateWorkspaceApiRequest {
     pub name: Option<String>,
+    /// Friction-log venture tag (chief-of-staff | carbonv3 | fultech |
+    /// port-analytics | other). UI requires this on new creates;
+    /// pre-experiment workspaces stay null.
+    #[serde(default)]
+    pub venture: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, TS)]
@@ -36,6 +41,9 @@ pub struct CreateAndStartWorkspaceRequest {
     pub executor_config: ExecutorConfig,
     pub prompt: String,
     pub attachment_ids: Option<Vec<Uuid>>,
+    /// Friction-log venture tag. See CreateWorkspaceApiRequest.
+    #[serde(default)]
+    pub venture: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, TS)]
@@ -49,6 +57,10 @@ pub struct UpdateWorkspace {
     pub archived: Option<bool>,
     pub pinned: Option<bool>,
     pub name: Option<String>,
+    /// Friction-log venture tag. Optional on edit; null clears the tag,
+    /// missing field leaves the existing value unchanged.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub venture: Option<Option<String>>,
 }
 
 #[derive(Debug, Serialize, Deserialize, TS)]

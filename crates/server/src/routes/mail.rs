@@ -16,6 +16,7 @@ use db::models::mail::{
 use deployment::Deployment;
 use serde::Deserialize;
 use serde_json::json;
+use services::services::friction_emitter;
 use utils::response::ApiResponse;
 use uuid::Uuid;
 
@@ -42,20 +43,50 @@ async fn send(
     State(deployment): State<DeploymentImpl>,
     ResponseJson(payload): ResponseJson<SendMailRequest>,
 ) -> MailRouteResult<SendMailResponse> {
-    send_mail(&deployment.db().pool, payload)
-        .await
-        .map(|response| ResponseJson(ApiResponse::success(response)))
-        .map_err(mail_error_response)
+    let sender_workspace_id = payload.sender.workspace_id;
+    let pool = &deployment.db().pool;
+    let response = send_mail(pool, payload).await.map_err(mail_error_response)?;
+
+    // Friction-log emit AFTER the mail_messages row commits, ONE event per
+    // message_id (H1 dedup: never per-recipient). E-AUTO-1: never inside tx.
+    let metadata = json!({
+        "message_id": response.message_id.simple().to_string(),
+        "recipient_count": 1,
+    });
+    match sender_workspace_id {
+        Some(workspace_id) => {
+            friction_emitter::emit_for_workspace(pool, "mail.send", workspace_id, metadata).await;
+        }
+        None => friction_emitter::emit_global("mail.send", metadata).await,
+    }
+
+    Ok(ResponseJson(ApiResponse::success(response)))
 }
 
 async fn broadcast(
     State(deployment): State<DeploymentImpl>,
     ResponseJson(payload): ResponseJson<BroadcastMailRequest>,
 ) -> MailRouteResult<BroadcastMailResponse> {
-    broadcast_mail(&deployment.db().pool, payload)
+    let sender_workspace_id = payload.sender.workspace_id;
+    let pool = &deployment.db().pool;
+    let response = broadcast_mail(pool, payload)
         .await
-        .map(|response| ResponseJson(ApiResponse::success(response)))
-        .map_err(mail_error_response)
+        .map_err(mail_error_response)?;
+
+    // Friction-log emit AFTER the mail_messages row commits, ONE event per
+    // message_id (H1 dedup: never per-recipient). E-AUTO-1: never inside tx.
+    let metadata = json!({
+        "message_id": response.message_id.simple().to_string(),
+        "recipient_count": response.recipient_count,
+    });
+    match sender_workspace_id {
+        Some(workspace_id) => {
+            friction_emitter::emit_for_workspace(pool, "mail.send", workspace_id, metadata).await;
+        }
+        None => friction_emitter::emit_global("mail.send", metadata).await,
+    }
+
+    Ok(ResponseJson(ApiResponse::success(response)))
 }
 
 async fn list_threads(

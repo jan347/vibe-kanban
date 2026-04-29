@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE workspaces SET\n                archived = COALESCE($1, archived),\n                pinned = COALESCE($2, pinned),\n                name = CASE WHEN $3 THEN $4 ELSE name END,\n                venture = CASE WHEN $5 THEN $6 ELSE venture END,\n                updated_at = datetime('now', 'subsec')\n            WHERE id = $7",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 7
+    },
+    "nullable": []
+  },
+  "hash": "b943400327688e0b160e499eb4c0d98faa9c5c339335a85651b8117e2e42a48c"
+}

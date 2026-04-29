@@ -17,10 +17,11 @@ use db::models::{
     dispatch::{CreateDispatch, DispatchLogEntry, DispatchStatus},
     safety::AutoApprovalDecision,
 };
+use serde_json::json;
 use sqlx::SqlitePool;
 use uuid::Uuid;
 
-use crate::services::auto_approval;
+use crate::services::{auto_approval, friction_emitter};
 
 #[derive(Debug)]
 pub enum GatedDispatchResult {
@@ -104,6 +105,19 @@ pub async fn gated_create_dispatch(
     .fetch_one(&mut *tx)
     .await?;
     tx.commit().await?;
+
+    // Friction-log emit AFTER the dispatch_log + work_item_runs rows commit
+    // (E-AUTO-1: never inside the tx — a rolled-back tx must not leak an event).
+    friction_emitter::emit_for_workspace(
+        pool,
+        "dispatch.fire",
+        row.workspace_id,
+        json!({
+            "dispatch_id": row.id.simple().to_string(),
+            "action_kind": action_kind,
+        }),
+    )
+    .await;
 
     Ok(GatedDispatchResult::Approved(row))
 }

@@ -191,6 +191,9 @@ impl McpServer {
             archived,
             pinned,
             name,
+            // MCP tool doesn't expose venture editing yet — leave the
+            // existing tag intact (outer None = "leave unchanged").
+            venture: None,
         };
 
         let updated: Workspace = match self.send_json(self.client.put(&url).json(&payload)).await {

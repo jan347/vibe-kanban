@@ -16,6 +16,7 @@ pub mod dispatch;
 pub mod events;
 pub mod execution_processes;
 pub mod filesystem;
+pub mod friction;
 pub mod frontend;
 pub mod health;
 pub mod mail;
@@ -53,6 +54,7 @@ pub fn router(deployment: DeploymentImpl) -> IntoMakeService<Router> {
         .merge(artifacts::router())
         .merge(dispatch::router())
         .merge(safety::router())
+        .merge(friction::router())
         .merge(automation::router())
         .merge(scratch::router(&deployment))
         .merge(search::router(&deployment))

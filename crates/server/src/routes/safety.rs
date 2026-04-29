@@ -318,6 +318,29 @@ pub async fn resolve_auto_approval(
             .await;
     }
 
+    // Friction-log emit AFTER the resolve UPDATE has committed AND we
+    // know we're the winner of any concurrent-resolve race. This is
+    // distinct from supervisor.evaluate.* (machine decision); resolve
+    // is the human signal. See E-AUTO-1 + DX-AUTO-3 enum split.
+    if we_resolved {
+        let event_name = if payload.decision == "approved" {
+            "supervisor.resolve.approve"
+        } else {
+            "supervisor.resolve.reject"
+        };
+        services::services::friction_emitter::emit_for_workspace(
+            pool,
+            event_name,
+            row.workspace_id,
+            serde_json::json!({
+                "action_kind": row.action_kind.clone(),
+                "approval_id": row.approval_id.clone(),
+                "auto_approval_log_id": id.simple().to_string(),
+            }),
+        )
+        .await;
+    }
+
     Ok(ResponseJson(ApiResponse::success(row)))
 }
 

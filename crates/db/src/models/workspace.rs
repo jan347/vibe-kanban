@@ -51,6 +51,11 @@ pub struct Workspace {
     pub pinned: bool,
     pub name: Option<String>,
     pub worktree_deleted: bool,
+    /// Friction-log discipline (docs/designs/friction-log-discipline.md):
+    /// per-workspace venture tag for friction-log slicing. Nullable so
+    /// pre-experiment workspaces stay valid; UI requires this on new
+    /// creates, allows null on edits.
+    pub venture: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
@@ -85,6 +90,10 @@ pub struct WorkspaceContext {
 pub struct CreateWorkspace {
     pub branch: String,
     pub name: Option<String>,
+    /// Optional venture tag (chief-of-staff | carbonv3 | fultech |
+    /// port-analytics | other). Validation happens at the request layer.
+    #[serde(default)]
+    pub venture: Option<String>,
 }
 
 impl Workspace {
@@ -102,7 +111,8 @@ impl Workspace {
                           archived AS "archived!: bool",
                           pinned AS "pinned!: bool",
                           name,
-                          worktree_deleted AS "worktree_deleted!: bool"
+                          worktree_deleted AS "worktree_deleted!: bool",
+                          venture
                    FROM workspaces
                    ORDER BY created_at DESC"#
         )
@@ -204,7 +214,8 @@ impl Workspace {
                        archived          AS "archived!: bool",
                        pinned            AS "pinned!: bool",
                        name,
-                       worktree_deleted  AS "worktree_deleted!: bool"
+                       worktree_deleted  AS "worktree_deleted!: bool",
+                       venture
                FROM    workspaces
                WHERE   id = $1"#,
             id
@@ -226,7 +237,8 @@ impl Workspace {
                        archived          AS "archived!: bool",
                        pinned            AS "pinned!: bool",
                        name,
-                       worktree_deleted  AS "worktree_deleted!: bool"
+                       worktree_deleted  AS "worktree_deleted!: bool",
+                       venture
                FROM    workspaces
                WHERE   rowid = $1"#,
             rowid
@@ -269,7 +281,8 @@ impl Workspace {
                 w.archived as "archived!: bool",
                 w.pinned as "pinned!: bool",
                 w.name,
-                w.worktree_deleted as "worktree_deleted!: bool"
+                w.worktree_deleted as "worktree_deleted!: bool",
+                w.venture
             FROM workspaces w
             LEFT JOIN sessions s ON w.id = s.workspace_id
             LEFT JOIN execution_processes ep ON s.id = ep.session_id AND ep.completed_at IS NOT NULL
@@ -315,15 +328,16 @@ impl Workspace {
     ) -> Result<Self, WorkspaceError> {
         Ok(sqlx::query_as!(
             Workspace,
-            r#"INSERT INTO workspaces (id, task_id, container_ref, branch, setup_completed_at, name)
-               VALUES ($1, $2, $3, $4, $5, $6)
-               RETURNING id as "id!: Uuid", task_id as "task_id: Uuid", container_ref, branch, setup_completed_at as "setup_completed_at: DateTime<Utc>", created_at as "created_at!: DateTime<Utc>", updated_at as "updated_at!: DateTime<Utc>", archived as "archived!: bool", pinned as "pinned!: bool", name, worktree_deleted as "worktree_deleted!: bool""#,
+            r#"INSERT INTO workspaces (id, task_id, container_ref, branch, setup_completed_at, name, venture)
+               VALUES ($1, $2, $3, $4, $5, $6, $7)
+               RETURNING id as "id!: Uuid", task_id as "task_id: Uuid", container_ref, branch, setup_completed_at as "setup_completed_at: DateTime<Utc>", created_at as "created_at!: DateTime<Utc>", updated_at as "updated_at!: DateTime<Utc>", archived as "archived!: bool", pinned as "pinned!: bool", name, worktree_deleted as "worktree_deleted!: bool", venture"#,
             id,
             Option::<Uuid>::None,
             Option::<String>::None,
             data.branch,
             Option::<DateTime<Utc>>::None,
-            data.name
+            data.name,
+            data.venture
         )
         .fetch_one(pool)
         .await?)
@@ -405,28 +419,40 @@ impl Workspace {
 
     /// Update workspace fields. Only non-None values will be updated.
     /// For `name`, pass `Some("")` to clear the name, `Some("foo")` to set it, or `None` to leave unchanged.
+    /// For `venture`, the outer Option distinguishes "leave unchanged" (None) from "explicit
+    /// write" (Some(...)); the inner Option distinguishes "clear to NULL" (Some(None)) from
+    /// "set to value" (Some(Some(s))). Empty strings on the inner Some are coerced to NULL.
     pub async fn update(
         pool: &SqlitePool,
         workspace_id: Uuid,
         archived: Option<bool>,
         pinned: Option<bool>,
         name: Option<&str>,
+        venture: Option<Option<String>>,
     ) -> Result<(), sqlx::Error> {
         // Convert empty string to None for name field (to store as NULL)
         let name_value = name.filter(|s| !s.is_empty());
         let name_provided = name.is_some();
+
+        let venture_provided = venture.is_some();
+        let venture_value = venture
+            .flatten()
+            .filter(|s| !s.is_empty());
 
         sqlx::query!(
             r#"UPDATE workspaces SET
                 archived = COALESCE($1, archived),
                 pinned = COALESCE($2, pinned),
                 name = CASE WHEN $3 THEN $4 ELSE name END,
+                venture = CASE WHEN $5 THEN $6 ELSE venture END,
                 updated_at = datetime('now', 'subsec')
-            WHERE id = $5"#,
+            WHERE id = $7"#,
             archived,
             pinned,
             name_provided,
             name_value,
+            venture_provided,
+            venture_value,
             workspace_id
         )
         .execute(pool)
@@ -514,6 +540,7 @@ impl Workspace {
                 w.pinned AS "pinned!: bool",
                 w.name,
                 w.worktree_deleted AS "worktree_deleted!: bool",
+                w.venture,
 
                 CASE WHEN EXISTS (
                     SELECT 1
@@ -556,6 +583,7 @@ impl Workspace {
                     pinned: rec.pinned,
                     name: rec.name,
                     worktree_deleted: rec.worktree_deleted,
+                    venture: rec.venture,
                 },
                 is_running: rec.is_running != 0,
                 is_errored: rec.is_errored != 0,
@@ -574,7 +602,7 @@ impl Workspace {
                 && let Some(prompt) = Self::get_first_user_message(pool, ws.workspace.id).await?
             {
                 let name = Self::truncate_to_name(&prompt, WORKSPACE_NAME_MAX_LEN);
-                Self::update(pool, ws.workspace.id, None, None, Some(&name)).await?;
+                Self::update(pool, ws.workspace.id, None, None, Some(&name), None).await?;
                 ws.workspace.name = Some(name);
             }
         }
@@ -608,6 +636,7 @@ impl Workspace {
                 w.pinned AS "pinned!: bool",
                 w.name,
                 w.worktree_deleted AS "worktree_deleted!: bool",
+                w.venture,
 
                 CASE WHEN EXISTS (
                     SELECT 1
@@ -653,6 +682,7 @@ impl Workspace {
                 pinned: rec.pinned,
                 name: rec.name,
                 worktree_deleted: rec.worktree_deleted,
+                venture: rec.venture,
             },
             is_running: rec.is_running != 0,
             is_errored: rec.is_errored != 0,
@@ -662,7 +692,7 @@ impl Workspace {
             && let Some(prompt) = Self::get_first_user_message(pool, ws.workspace.id).await?
         {
             let name = Self::truncate_to_name(&prompt, WORKSPACE_NAME_MAX_LEN);
-            Self::update(pool, ws.workspace.id, None, None, Some(&name)).await?;
+            Self::update(pool, ws.workspace.id, None, None, Some(&name), None).await?;
             ws.workspace.name = Some(name);
         }
 
