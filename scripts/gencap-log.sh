@@ -33,6 +33,7 @@ fi
 
 # --- arg parsing ---
 QUICK_MSG=""
+SEVERITY_ARG=""
 while (( $# > 0 )); do
   case "$1" in
     --quick)
@@ -45,13 +46,25 @@ while (( $# > 0 )); do
       fi
       shift 2
       ;;
+    --severity)
+      SEVERITY_ARG="${2:-}"
+      if [[ ! "$SEVERITY_ARG" =~ ^P[123]$ ]]; then
+        echo "error: invalid --severity \"$SEVERITY_ARG\"" >&2
+        echo "because: severity must be one of: P1, P2, P3" >&2
+        echo "try: gencap log --quick \"...\" --severity P2" >&2
+        exit 1
+      fi
+      shift 2
+      ;;
     -h|--help)
       cat <<'EOF'
 gencap log — append a friction-log entry
 
 Usage:
-  gencap log                Interactive prompts (venture/layer/severity/details).
-  gencap log --quick "msg"  Terse 1-line capture (defaults venture=other, layer=cockpit-ui).
+  gencap log                              Interactive prompts (venture/layer/severity/details).
+  gencap log --quick "msg"                Terse 1-line capture (defaults venture=other, layer=cockpit-ui).
+                                          Severity prompt still required UNLESS stdin is a tty.
+  gencap log --quick "msg" --severity P2  Fully non-interactive (script-friendly).
 
 Each invocation writes ONE valid JSON line to ~/.gstack/projects/jan347-vibe-kanban/friction-log.jsonl.
 EOF
@@ -59,7 +72,7 @@ EOF
       ;;
     *)
       echo "error: unknown argument \"$1\"" >&2
-      echo "because: gencap log only accepts --quick \"msg\" (or no args for interactive)" >&2
+      echo "because: gencap log accepts --quick \"msg\" [--severity P1|P2|P3] (or no args for interactive)" >&2
       echo "try: gencap log --help" >&2
       exit 1
       ;;
@@ -82,6 +95,15 @@ prompt_enum() {
   local val
   local options
   options="$(IFS=/; printf '%s' "${allowed[*]}")"
+  # Non-tty stdin → fail fast instead of infinite-looping on empty reads.
+  # The original loop assumed an interactive terminal; piped or sourced
+  # invocations would burn CPU forever. Real bug found during setup.
+  if [[ ! -t 0 ]]; then
+    echo "error: cannot prompt for $label" >&2
+    echo "because: stdin is not a terminal (piped or scripted invocation)" >&2
+    echo "try: run \`gencap log\` interactively, OR pass --severity P1|P2|P3 with --quick" >&2
+    exit 1
+  fi
   while true; do
     read -r -p "$label? [$options]: " val
     if contains "$val" "${allowed[@]}"; then
@@ -136,7 +158,13 @@ TS="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
 if [[ -n "$QUICK_MSG" ]]; then
   # Quick mode (D-AUTO-3 spec): skip prompts except severity, default venture/layer.
-  SEVERITY="$(prompt_enum 'Severity' "${VALID_SEVERITIES[@]}")"
+  # If --severity passed, fully non-interactive; otherwise prompt (which
+  # now fails fast on non-tty rather than looping forever).
+  if [[ -n "$SEVERITY_ARG" ]]; then
+    SEVERITY="$SEVERITY_ARG"
+  else
+    SEVERITY="$(prompt_enum 'Severity' "${VALID_SEVERITIES[@]}")"
+  fi
   VENTURE="other"
   VENTURE_OTHER=""
   LAYER="cockpit-ui"
