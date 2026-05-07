@@ -1,9 +1,11 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import {
   SpinnerIcon,
   PlusIcon,
   EnvelopeIcon,
   RobotIcon,
+  ListIcon,
+  KanbanIcon,
 } from '@phosphor-icons/react';
 import { useAppNavigation } from '@/shared/hooks/useAppNavigation';
 import {
@@ -50,6 +52,34 @@ function groupOf(ws: SidebarWorkspace): DashboardGroup {
   return 'idle';
 }
 
+function WorkspaceBadges({ ws }: { ws: SidebarWorkspace }) {
+  return (
+    <>
+      {ws.hasPendingApproval && (
+        <span className="rounded-full bg-error px-2 text-base text-high">
+          approval
+        </span>
+      )}
+      {(ws.latestProcessStatus === 'failed' ||
+        ws.latestProcessStatus === 'killed') && (
+        <span className="rounded-full bg-error px-2 text-base text-high">
+          {ws.latestProcessStatus}
+        </span>
+      )}
+      {ws.isRunning && (
+        <span className="rounded-full bg-success px-2 text-base text-high">
+          running
+        </span>
+      )}
+      {ws.prStatus === 'open' && (
+        <span className="rounded-full bg-brand px-2 text-base text-high">
+          PR{ws.prNumber ? ` #${ws.prNumber}` : ''}
+        </span>
+      )}
+    </>
+  );
+}
+
 function WorkspaceRow({
   ws,
   onSelect,
@@ -67,30 +97,40 @@ function WorkspaceRow({
         <span className="text-low truncate">{ws.branch}</span>
       </div>
       <div className="flex items-center gap-1 shrink-0">
-        {ws.hasPendingApproval && (
-          <span className="rounded-full bg-error px-2 text-base text-high">
-            approval
-          </span>
-        )}
-        {(ws.latestProcessStatus === 'failed' ||
-          ws.latestProcessStatus === 'killed') && (
-          <span className="rounded-full bg-error px-2 text-base text-high">
-            {ws.latestProcessStatus}
-          </span>
-        )}
-        {ws.isRunning && (
-          <span className="rounded-full bg-success px-2 text-base text-high">
-            running
-          </span>
-        )}
-        {ws.prStatus === 'open' && (
-          <span className="rounded-full bg-brand px-2 text-base text-high">
-            PR{ws.prNumber ? ` #${ws.prNumber}` : ''}
-          </span>
-        )}
+        <WorkspaceBadges ws={ws} />
       </div>
     </button>
   );
+}
+
+function WorkspaceCard({
+  ws,
+  onSelect,
+}: {
+  ws: SidebarWorkspace;
+  onSelect: () => void;
+}) {
+  return (
+    <button
+      onClick={onSelect}
+      className="flex w-full flex-col items-stretch gap-2 rounded-sm border border-secondary bg-panel p-3 text-left hover:bg-secondary"
+    >
+      <span className="text-base text-high line-clamp-2">{ws.name}</span>
+      <span className="text-low truncate text-xs">{ws.branch}</span>
+      <div className="flex flex-wrap items-center gap-1">
+        <WorkspaceBadges ws={ws} />
+      </div>
+    </button>
+  );
+}
+
+const VIEW_MODE_STORAGE_KEY = 'workspaces.viewMode';
+type ViewMode = 'list' | 'board';
+
+function readStoredViewMode(): ViewMode {
+  if (typeof window === 'undefined') return 'list';
+  const raw = window.localStorage.getItem(VIEW_MODE_STORAGE_KEY);
+  return raw === 'board' ? 'board' : 'list';
 }
 
 export function WorkspacesLanding() {
@@ -98,6 +138,14 @@ export function WorkspacesLanding() {
   const { workspaces, isLoading } = useWorkspaces();
   const { data: unreadMail } = useUnreadMail();
   const unreadMailCount = unreadMail?.length ?? 0;
+  const [viewMode, setViewMode] = useState<ViewMode>(readStoredViewMode);
+
+  const updateViewMode = (next: ViewMode) => {
+    setViewMode(next);
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem(VIEW_MODE_STORAGE_KEY, next);
+    }
+  };
 
   const grouped = useMemo(() => {
     const buckets: Record<DashboardGroup, SidebarWorkspace[]> = {
@@ -177,6 +225,40 @@ export function WorkspacesLanding() {
       <header className="flex items-center justify-between">
         <h1 className="text-lg text-high">Workspaces</h1>
         <div className="flex items-center gap-2">
+          <div
+            role="tablist"
+            aria-label="View mode"
+            className="flex items-center rounded-sm border border-secondary bg-panel p-0.5"
+          >
+            <button
+              role="tab"
+              aria-selected={viewMode === 'list'}
+              title="List view"
+              className={`flex items-center gap-1 rounded-sm px-2 py-1 text-base ${
+                viewMode === 'list'
+                  ? 'bg-secondary text-high'
+                  : 'text-low hover:text-high'
+              }`}
+              onClick={() => updateViewMode('list')}
+            >
+              <ListIcon className="size-4" />
+              List
+            </button>
+            <button
+              role="tab"
+              aria-selected={viewMode === 'board'}
+              title="Board view"
+              className={`flex items-center gap-1 rounded-sm px-2 py-1 text-base ${
+                viewMode === 'board'
+                  ? 'bg-secondary text-high'
+                  : 'text-low hover:text-high'
+              }`}
+              onClick={() => updateViewMode('board')}
+            >
+              <KanbanIcon className="size-4" />
+              Board
+            </button>
+          </div>
           <button
             className="flex items-center gap-1 rounded-sm border border-secondary bg-panel px-3 py-1 text-base text-high hover:bg-secondary"
             onClick={() => appNavigation.goToMail()}
@@ -198,28 +280,63 @@ export function WorkspacesLanding() {
           </button>
         </div>
       </header>
-      {GROUP_ORDER.map((group) => {
-        const items = grouped[group];
-        if (items.length === 0) return null;
-        return (
-          <section key={group} className="flex flex-col gap-2">
-            <h2 className="text-base text-high">
-              {GROUP_LABELS[group]}{' '}
-              <span className="text-low">({items.length})</span>
-            </h2>
-            <ul className="flex flex-col gap-1">
-              {items.map((ws) => (
-                <li key={ws.id}>
-                  <WorkspaceRow
-                    ws={ws}
-                    onSelect={() => appNavigation.goToWorkspace(ws.id)}
-                  />
-                </li>
-              ))}
-            </ul>
-          </section>
-        );
-      })}
+      {viewMode === 'board' ? (
+        <div className="flex flex-1 gap-3 overflow-x-auto pb-2">
+          {GROUP_ORDER.map((group) => {
+            const items = grouped[group];
+            return (
+              <section
+                key={group}
+                className="flex w-72 shrink-0 flex-col gap-2 rounded-sm border border-secondary bg-secondary/30 p-2"
+              >
+                <h2 className="px-1 text-base text-high">
+                  {GROUP_LABELS[group]}{' '}
+                  <span className="text-low">({items.length})</span>
+                </h2>
+                <ul className="flex flex-1 flex-col gap-2 overflow-y-auto">
+                  {items.length === 0 ? (
+                    <li className="rounded-sm border border-dashed border-secondary p-3 text-center text-xs text-low">
+                      Empty
+                    </li>
+                  ) : (
+                    items.map((ws) => (
+                      <li key={ws.id}>
+                        <WorkspaceCard
+                          ws={ws}
+                          onSelect={() => appNavigation.goToWorkspace(ws.id)}
+                        />
+                      </li>
+                    ))
+                  )}
+                </ul>
+              </section>
+            );
+          })}
+        </div>
+      ) : (
+        GROUP_ORDER.map((group) => {
+          const items = grouped[group];
+          if (items.length === 0) return null;
+          return (
+            <section key={group} className="flex flex-col gap-2">
+              <h2 className="text-base text-high">
+                {GROUP_LABELS[group]}{' '}
+                <span className="text-low">({items.length})</span>
+              </h2>
+              <ul className="flex flex-col gap-1">
+                {items.map((ws) => (
+                  <li key={ws.id}>
+                    <WorkspaceRow
+                      ws={ws}
+                      onSelect={() => appNavigation.goToWorkspace(ws.id)}
+                    />
+                  </li>
+                ))}
+              </ul>
+            </section>
+          );
+        })
+      )}
     </div>
   );
 }
